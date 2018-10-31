@@ -66,7 +66,7 @@ function google_analytics_requirements($phase) {
  * Migrate create only fields to gtag properties.
  */
 function google_analytics_update_8300() {
-  $config = \Drupal::config('google_analytics.settings');
+  $config = \Drupal::configFactory()->getEditable('google_analytics.settings');
   $create_only_fields = $config->get('codesnippet.create');
   $properties = [
     'client_id' => $create_only_fields['clientId'],
@@ -79,7 +79,10 @@ function google_analytics_update_8300() {
     'user_id' => $create_only_fields['userId'],
   ];
   $properties = array_filter($properties);
-  $config->set('codesnippet.create', $properties);
+
+  $config
+    ->set('codesnippet.create', $properties)
+    ->save();
 
   return t('Migrated to gtag properties.');
 }
