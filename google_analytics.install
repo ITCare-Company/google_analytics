@@ -47,3 +47,25 @@ function google_analytics_requirements($phase) {
 
   return $requirements;
 }
+
+/**
+ * Migrate create only fields to gtag properties.
+ */
+function google_analytics_update_8300() {
+  $config = \Drupal::config('google_analytics.settings');
+  $create_only_fields = $config->get('codesnippet.create');
+  $properties = [
+    'client_id' => $create_only_fields['clientId'],
+    'cookie_name' => $create_only_fields['cookieName'],
+    'cookie_domain' => $create_only_fields['cookieDomain'],
+    'cookie_expires' => $create_only_fields['cookieExpires'],
+    'sample_rate' => $create_only_fields['sampleRate'],
+    'site_speed_sample_rate' => $create_only_fields['siteSpeedSampleRate'],
+    'use_amp_client_id' => $create_only_fields['useAmpClientId'],
+    'user_id' => $create_only_fields['userId'],
+  ];
+  $properties = array_filter($properties);
+  $config->set('codesnippet.create', $properties);
+
+  return t('Migrated to gtag properties.');
+}
