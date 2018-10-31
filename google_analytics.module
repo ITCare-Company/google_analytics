@@ -316,6 +316,9 @@ function google_analytics_page_attachments(array &$page) {
     $arguments_json = str_replace('"PLACEHOLDER_URL_CUSTOM"', $url_custom, $arguments_json);
 
     // Create a tracker.
+    if (!empty($codesnippet_before)) {
+      $script .= $codesnippet_before;
+    }
     $script .= 'gtag("config", ' . Json::encode($id) . ', ' . $arguments_json . ');';
 
     // Prepare Adsense tracking.
@@ -323,9 +326,6 @@ function google_analytics_page_attachments(array &$page) {
 
     if (!empty($custom_var)) {
       $script .= $custom_var;
-    }
-    if (!empty($codesnippet_before)) {
-      $script .= $codesnippet_before;
     }
     if (!empty($message_events)) {
       $script .= $message_events;
