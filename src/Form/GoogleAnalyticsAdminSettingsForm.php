@@ -886,18 +886,23 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
     // List of supported field names:
     // https://developers.google.com/analytics/devguides/collection/analyticsjs/field-reference#create
     $create_only_fields = [
+      'allow_ad_personalization_signals',
       'client_id',
+      'currency',
+      'country',
       'cookie_name',
       'cookie_domain',
       'cookie_expires',
+      'link_attribution',
       'sample_rate',
+      'send_page_view',
       'site_speed_sample_rate',
       'use_amp_client_id',
       'user_id',
     ];
 
     if (!in_array($name, $create_only_fields)) {
-      return t('Create only field name %name is an unknown field name. Field names are case sensitive. Please see <a href=":url">create only fields</a> documentation for supported field names.', ['%name' => $name, ':url' => 'https://developers.google.com/analytics/devguides/collection/analyticsjs/field-reference#create']);
+      return t('Property name %name is unknown. Properties are case sensitive. Please see <a href=":url">documentation</a> for supported properties.', ['%name' => $name, ':url' => 'https://developers.google.com/analytics/devguides/collection/gtagjs/']);
     }
   }
 
