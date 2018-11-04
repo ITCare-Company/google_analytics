@@ -903,7 +903,6 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
     // List of supported field names:
     // https://developers.google.com/analytics/devguides/collection/analyticsjs/field-reference#create
     $allowed_parameters = [
-      'allow_ad_personalization_signals',
       'client_id',
       'currency',
       'country',
@@ -916,7 +915,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
       'use_amp_client_id',
     ];
 
-    if ($name == 'allow_display_features') {
+    if ($name == 'allow_ad_personalization_signals') {
       return t('Parameter name %name is disallowed. Please select <em>Track display features</em> under <em>Tracking scope > Search and Advertising</em>.', ['%name' => $name]);
     }
     if ($name == 'anonymize_ip') {

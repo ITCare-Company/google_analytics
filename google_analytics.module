@@ -307,7 +307,7 @@ function google_analytics_page_attachments(array &$page) {
     // Disabling display features.
     // @see https://developers.google.com/analytics/devguides/collection/gtagjs/display-features
     if (!$config->get('track.displayfeatures')) {
-      $arguments['allow_display_features'] = FALSE;
+      $arguments['allow_ad_personalization_signals'] = FALSE;
     }
 
     // Convert array to JSON format.
