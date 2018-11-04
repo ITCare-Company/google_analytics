@@ -227,12 +227,12 @@ class GoogleAnalyticsBasicTest extends WebTestBase {
     // Test if track display features is disabled.
     $this->config('google_analytics.settings')->set('track.displayfeatures', 0)->save();
     $this->drupalGet('');
-    $this->assertRaw('"allow_display_features":false', '[testGoogleAnalyticsTrackingCode]: Tracking code for display features is not enabled.');
+    $this->assertRaw('"allow_ad_personalization_signals":false', '[testGoogleAnalyticsTrackingCode]: Tracking code for display features is not enabled.');
 
     // Test if track display features is enabled.
     $this->config('google_analytics.settings')->set('track.displayfeatures', 1)->save();
     $this->drupalGet('');
-    $this->assertNoRaw('"allow_display_features":false', '[testGoogleAnalyticsTrackingCode]: Tracking code for display features is enabled.');
+    $this->assertNoRaw('"allow_ad_personalization_signals":false', '[testGoogleAnalyticsTrackingCode]: Tracking code for display features is enabled.');
 
     // Test if tracking of url fragments is enabled.
     $this->config('google_analytics.settings')->set('track.urlfragments', 1)->save();
