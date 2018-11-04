@@ -910,13 +910,21 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
       'cookie_name',
       'cookie_domain',
       'cookie_expires',
-      'link_attribution',
       'sample_rate',
       'send_page_view',
       'site_speed_sample_rate',
       'use_amp_client_id',
     ];
 
+    if ($name == 'allow_display_features') {
+      return t('Parameter name %name is disallowed. Please select <em>Track display features</em> under <em>Tracking scope > Search and Advertising</em>.', ['%name' => $name]);
+    }
+    if ($name == 'anonymize_ip') {
+      return t('Parameter name %name is disallowed. Please select <em>Anonymize visitors IP address</em> under <em>Tracking scope > Privacy</em>.', ['%name' => $name]);
+    }
+    if ($name == 'link_attribution') {
+      return t('Parameter name %name is disallowed. Please select <em>Track enhanced link attribution</em> under <em>Tracking scope > Links and downloads</em>.', ['%name' => $name]);
+    }
     if ($name == 'linker') {
       return t('Parameter name %name is disallowed. Please select <em>Multiple top-level domains</em> under <em>Tracking scope > Domains</em> to enable cross domain tracking.', ['%name' => $name]);
     }
