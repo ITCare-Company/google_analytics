@@ -6,11 +6,28 @@ use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\Extension\ModuleHandler;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\Core\Config\ConfigFactoryInterface;
 
 /**
  * Configure Google_Analytics settings for this site.
  */
 class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
+
+  protected $moduleHandler;
+
+  protected $currentUser;
+
+  /**
+   * {@inheritdoc}
+   */
+  public function __construct(ConfigFactoryInterface $config_factory, AccountInterface $currentUser, ModuleHandler $moduleHandler) {
+    parent::__construct($config_factory);
+    $this->currentUser = $currentUser;
+    $this->moduleHandler = $moduleHandler;
+  }
 
   /**
    * {@inheritdoc}
@@ -133,7 +150,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
     ];
 
     // Page specific visibility configurations.
-    $account = \Drupal::currentUser();
+    $account = $this->currentUser;
     $php_access = $account->hasPermission('use PHP for google analytics tracking visibility');
     $visibility_request_path_pages = $config->get('visibility.request_path_pages');
 
@@ -155,7 +172,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
       ];
       $description = $this->t("Specify pages by using their paths. Enter one path per line. The '*' character is a wildcard. Example paths are %blog for the blog page and %blog-wildcard for every personal blog. %front is the front page.", ['%blog' => '/blog', '%blog-wildcard' => '/blog/*', '%front' => '<front>']);
 
-      if (\Drupal::moduleHandler()->moduleExists('php') && $php_access) {
+      if ($this->moduleHandler->moduleExists('php') && $php_access) {
         $options[] = $this->t('Pages on which this PHP code returns <code>TRUE</code> (experts only)');
         $title = $this->t('Pages or PHP code');
         $description .= ' ' . $this->t('If the PHP option is chosen, enter PHP code between %php. Note that executing incorrect PHP code can break your Drupal site.', ['%php' => '<?php ?>']);
@@ -271,7 +288,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
     ];
 
     $colorbox_dependencies = '<div class="admin-requirements">';
-    $colorbox_dependencies .= $this->t('Requires: @module-list', ['@module-list' => (\Drupal::moduleHandler()->moduleExists('colorbox') ? $this->t('@module (<span class="admin-enabled">enabled</span>)', ['@module' => 'Colorbox']) : $this->t('@module (<span class="admin-missing">disabled</span>)', ['@module' => 'Colorbox']))]);
+    $colorbox_dependencies .= $this->t('Requires: @module-list', ['@module-list' => ($this->moduleHandler->moduleExists('colorbox') ? $this->t('@module (<span class="admin-enabled">enabled</span>)', ['@module' => 'Colorbox']) : $this->t('@module (<span class="admin-missing">disabled</span>)', ['@module' => 'Colorbox']))]);
     $colorbox_dependencies .= '</div>';
 
     $form['tracking']['linktracking']['google_analytics_trackcolorbox'] = [
@@ -279,7 +296,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
       '#title' => $this->t('Track content in colorbox modal dialogs'),
       '#description' => $this->t('Enable to track the content shown in colorbox modal windows.') . $colorbox_dependencies,
       '#default_value' => $config->get('track.colorbox'),
-      '#disabled' => (\Drupal::moduleHandler()->moduleExists('colorbox') ? FALSE : TRUE),
+      '#disabled' => ($this->moduleHandler->moduleExists('colorbox') ? FALSE : TRUE),
     ];
 
     $form['tracking']['linktracking']['google_analytics_tracklinkid'] = [
@@ -321,7 +338,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
     ];
 
     $site_search_dependencies = '<div class="admin-requirements">';
-    $site_search_dependencies .= $this->t('Requires: @module-list', ['@module-list' => (\Drupal::moduleHandler()->moduleExists('search') ? $this->t('@module (<span class="admin-enabled">enabled</span>)', ['@module' => 'Search']) : $this->t('@module (<span class="admin-missing">disabled</span>)', ['@module' => 'Search']))]);
+    $site_search_dependencies .= $this->t('Requires: @module-list', ['@module-list' => ($this->moduleHandler->moduleExists('search') ? $this->t('@module (<span class="admin-enabled">enabled</span>)', ['@module' => 'Search']) : $this->t('@module (<span class="admin-missing">disabled</span>)', ['@module' => 'Search']))]);
     $site_search_dependencies .= '</div>';
 
     $form['tracking']['search_and_advertising']['google_analytics_site_search'] = [
@@ -329,7 +346,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
       '#title' => $this->t('Track internal search'),
       '#description' => $this->t('If checked, internal search keywords are tracked. You must configure your Google account to use the internal query parameter <strong>search</strong>. For more information see <a href=":url">Setting Up Site Search for a Profile</a>.', [':url' => 'https://support.google.com/analytics/answer/1012264']) . $site_search_dependencies,
       '#default_value' => $config->get('track.site_search'),
-      '#disabled' => (\Drupal::moduleHandler()->moduleExists('search') ? FALSE : TRUE),
+      '#disabled' => ($this->moduleHandler->moduleExists('search') ? FALSE : TRUE),
     ];
     $form['tracking']['search_and_advertising']['google_analytics_trackadsense'] = [
       '#type' => 'checkbox',
@@ -407,7 +424,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
         '#element_validate' => [[get_class($this), 'tokenElementValidate']],
         '#token_types' => ['node'],
       ];
-      if (\Drupal::moduleHandler()->moduleExists('token')) {
+      if ($this->moduleHandler->moduleExists('token')) {
         $form['google_analytics_custom_dimension']['indexes'][$i]['value']['#element_validate'][] = 'token_element_validate';
       }
     }
@@ -416,7 +433,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
       '#type' => 'item',
       '#description' => $this->t('You can supplement Google Analytics\' basic IP address tracking of visitors by segmenting users based on custom dimensions. Section 7 of the <a href=":ga_tos">Google Analytics terms of service</a> requires that You will not (and will not allow any third party to) use the Service to track, collect or upload any data that personally identifies an individual (such as a name, userid, email address or billing information), or other data which can be reasonably linked to such information by Google. You will have and abide by an appropriate Privacy Policy and will comply with all applicable laws and regulations relating to the collection of information from Visitors. You must post a Privacy Policy and that Privacy Policy must provide notice of Your use of cookies that are used to collect traffic data, and You must not circumvent any privacy features (e.g., an opt-out) that are part of the Service.', [':ga_tos' => 'https://www.google.com/analytics/terms/gb.html']),
     ];
-    if (\Drupal::moduleHandler()->moduleExists('token')) {
+    if ($this->moduleHandler->moduleExists('token')) {
       $form['google_analytics_custom_dimension']['google_analytics_token_tree'] = [
         '#theme' => 'token_tree_link',
         '#token_types' => ['node'],
@@ -472,7 +489,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
         '#element_validate' => [[get_class($this), 'tokenElementValidate']],
         '#token_types' => ['node'],
       ];
-      if (\Drupal::moduleHandler()->moduleExists('token')) {
+      if ($this->moduleHandler->moduleExists('token')) {
         $form['google_analytics_custom_metric']['indexes'][$i]['value']['#element_validate'][] = 'token_element_validate';
       }
     }
@@ -481,7 +498,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
       '#type' => 'item',
       '#description' => $this->t('You can supplement Google Analytics\' basic IP address tracking of visitors by segmenting users based on custom metrics. Section 7 of the <a href=":ga_tos">Google Analytics terms of service</a> requires that You will not (and will not allow any third party to) use the Service to track, collect or upload any data that personally identifies an individual (such as a name, userid, email address or billing information), or other data which can be reasonably linked to such information by Google. You will have and abide by an appropriate Privacy Policy and will comply with all applicable laws and regulations relating to the collection of information from Visitors. You must post a Privacy Policy and that Privacy Policy must provide notice of Your use of cookies that are used to collect traffic data, and You must not circumvent any privacy features (e.g., an opt-out) that are part of the Service.', [':ga_tos' => 'https://www.google.com/analytics/terms/gb.html']),
     ];
-    if (\Drupal::moduleHandler()->moduleExists('token')) {
+    if ($this->moduleHandler->moduleExists('token')) {
       $form['google_analytics_custom_metric']['google_analytics_token_tree'] = [
         '#theme' => 'token_tree_link',
         '#token_types' => ['node'],
@@ -503,7 +520,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
     ];
 
     // Allow for tracking of the originating node when viewing translation sets.
-    if (\Drupal::moduleHandler()->moduleExists('content_translation')) {
+    if ($this->moduleHandler->moduleExists('content_translation')) {
       $form['advanced']['google_analytics_translation_set'] = [
         '#type' => 'checkbox',
         '#title' => $this->t('Track translation sets as one unit'),
@@ -989,6 +1006,18 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
     }
 
     return $values;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      // Load the service required to construct this class.
+      $container->get('config.factory'),
+      $container->get('current_user'),
+      $container->get('module_handler')
+    );
   }
 
 }
