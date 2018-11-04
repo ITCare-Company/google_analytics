@@ -902,7 +902,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
   protected static function validateParameterName($name) {
     // List of supported field names:
     // https://developers.google.com/analytics/devguides/collection/analyticsjs/field-reference#create
-    $parameters = [
+    $allowed_parameters = [
       'allow_ad_personalization_signals',
       'client_id',
       'currency',
@@ -931,7 +931,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
     if ($name == 'user_id') {
       return t('Parameter name %name is disallowed. Please enable <em>Track User ID</em> under <em>Tracking scope > Users</em>.', ['%name' => $name]);
     }
-    if (!in_array($name, $parameters)) {
+    if (!in_array($name, $allowed_parameters)) {
       return t('Parameter name %name is unknown. Parameters are case sensitive. Please see <a href=":url">documentation</a> for supported parameters.', ['%name' => $name, ':url' => 'https://developers.google.com/analytics/devguides/collection/gtagjs/']);
     }
   }
