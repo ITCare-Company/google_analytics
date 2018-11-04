@@ -915,9 +915,14 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
       'send_page_view',
       'site_speed_sample_rate',
       'use_amp_client_id',
-      'user_id',
     ];
 
+    if ($name == 'linker') {
+      return t('Property name %name is disallowed. Please select <em>Multiple top-level domains</em> under <em>Tracking scope > Domains</em> to enable cross domain tracking.', ['%name' => $name]);
+    }
+    if ($name == 'user_id') {
+      return t('Property name %name is disallowed. Please enable <em>Track User ID</em> under <em>Tracking scope > Users</em>.', ['%name' => $name]);
+    }
     if (!in_array($name, $create_only_fields)) {
       return t('Property name %name is unknown. Properties are case sensitive. Please see <a href=":url">documentation</a> for supported properties.', ['%name' => $name, ':url' => 'https://developers.google.com/analytics/devguides/collection/gtagjs/']);
     }
