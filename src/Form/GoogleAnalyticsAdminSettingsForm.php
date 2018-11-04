@@ -539,11 +539,11 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
     ];
     $form['advanced']['codesnippet']['google_analytics_codesnippet_create'] = [
       '#type' => 'textarea',
-      '#title' => $this->t('Properties'),
+      '#title' => $this->t('Parameters'),
       '#default_value' => $this->getNameValueString($config->get('codesnippet.create')),
       '#rows' => 5,
       '#description' => $this->t('Enter one value per line, in the format name|value. Settings in this textarea will be added to <code>gtag("config", "UA-XXXX-Y", {"name":"value"});</code>. For more information, read <a href=":url">documentation</a> in the gtag.js reference.', [':url' => 'https://developers.google.com/analytics/devguides/collection/gtagjs/']),
-      '#element_validate' => [[get_class($this), 'validateCreateFieldValues']],
+      '#element_validate' => [[get_class($this), 'validateParameterValues']],
     ];
     $form['advanced']['codesnippet']['google_analytics_codesnippet_before'] = [
       '#type' => 'textarea',
@@ -821,7 +821,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
   }
 
   /**
-   * The #element_validate callback for create only fields.
+   * The #element_validate callback for parameters.
    *
    * @param array $element
    *   An associative array containing the properties and children of the
@@ -831,8 +831,8 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
    *
    * @see form_process_pattern()
    */
-  public static function validateCreateFieldValues(array $element, FormStateInterface $form_state) {
-    $values = static::extractCreateFieldValues($element['#value']);
+  public static function validateParameterValues(array $element, FormStateInterface $form_state) {
+    $values = static::extractParameterValues($element['#value']);
 
     if (!is_array($values)) {
       $form_state->setError($element, t('The %element-title field contains invalid input.', ['%element-title' => $element['#title']]));
@@ -840,11 +840,11 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
     else {
       // Check that name and value are valid for the field type.
       foreach ($values as $name => $value) {
-        if ($error = static::validateCreateFieldName($name)) {
+        if ($error = static::validateParameterName($name)) {
           $form_state->setError($element, $error);
           break;
         }
-        if ($error = static::validateCreateFieldValue($value)) {
+        if ($error = static::validateParameterValue($value)) {
           $form_state->setError($element, $error);
           break;
         }
@@ -865,7 +865,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
    *
    * @see \Drupal\options\Plugin\Field\FieldType\ListTextItem::allowedValuesString()
    */
-  protected static function extractCreateFieldValues($string) {
+  protected static function extractParameterValues($string) {
     $values = [];
 
     $list = explode("\n", $string);
@@ -891,7 +891,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
   }
 
   /**
-   * Checks whether a field name is valid.
+   * Checks whether a parameter name is valid.
    *
    * @param string $name
    *   The option value entered by the user.
@@ -899,10 +899,10 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
    * @return string|null
    *   The error message if the specified value is invalid, NULL otherwise.
    */
-  protected static function validateCreateFieldName($name) {
+  protected static function validateParameterName($name) {
     // List of supported field names:
     // https://developers.google.com/analytics/devguides/collection/analyticsjs/field-reference#create
-    $create_only_fields = [
+    $parameters = [
       'allow_ad_personalization_signals',
       'client_id',
       'currency',
@@ -918,13 +918,13 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
     ];
 
     if ($name == 'linker') {
-      return t('Property name %name is disallowed. Please select <em>Multiple top-level domains</em> under <em>Tracking scope > Domains</em> to enable cross domain tracking.', ['%name' => $name]);
+      return t('Parameter name %name is disallowed. Please select <em>Multiple top-level domains</em> under <em>Tracking scope > Domains</em> to enable cross domain tracking.', ['%name' => $name]);
     }
     if ($name == 'user_id') {
-      return t('Property name %name is disallowed. Please enable <em>Track User ID</em> under <em>Tracking scope > Users</em>.', ['%name' => $name]);
+      return t('Parameter name %name is disallowed. Please enable <em>Track User ID</em> under <em>Tracking scope > Users</em>.', ['%name' => $name]);
     }
-    if (!in_array($name, $create_only_fields)) {
-      return t('Property name %name is unknown. Properties are case sensitive. Please see <a href=":url">documentation</a> for supported properties.', ['%name' => $name, ':url' => 'https://developers.google.com/analytics/devguides/collection/gtagjs/']);
+    if (!in_array($name, $parameters)) {
+      return t('Parameter name %name is unknown. Parameters are case sensitive. Please see <a href=":url">documentation</a> for supported parameters.', ['%name' => $name, ':url' => 'https://developers.google.com/analytics/devguides/collection/gtagjs/']);
     }
   }
 
@@ -937,12 +937,12 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
    * @return string|null
    *   The error message if the specified value is invalid, NULL otherwise.
    */
-  protected static function validateCreateFieldValue($value) {
+  protected static function validateParameterValue($value) {
     if (!is_bool($value) && !Unicode::strlen($value)) {
-      return t('A create only field requires a value.');
+      return t('A parameter requires a value.');
     }
     if (Unicode::strlen($value) > 255) {
-      return t('The value of a create only field must be a string at most 255 characters long.');
+      return t('The value of a parameter must be a string at most 255 characters long.');
     }
   }
 

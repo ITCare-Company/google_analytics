@@ -82,7 +82,7 @@ class GoogleAnalyticsBasicTest extends WebTestBase {
     $this->assertFieldByName('google_analytics_codesnippet_create');
     $this->assertFieldByName('google_analytics_codesnippet_before');
     $this->assertFieldByName('google_analytics_codesnippet_after');
-    $this->assertNoFieldByXPath("//textarea[@name='google_analytics_codesnippet_create' and @disabled='disabled']", NULL, '"Create only fields" is enabled.');
+    $this->assertNoFieldByXPath("//textarea[@name='google_analytics_codesnippet_create' and @disabled='disabled']", NULL, '"Parameters" field is enabled.');
     $this->assertNoFieldByXPath("//textarea[@name='google_analytics_codesnippet_before' and @disabled='disabled']", NULL, '"Code snippet (before)" is enabled.');
     $this->assertNoFieldByXPath("//textarea[@name='google_analytics_codesnippet_after' and @disabled='disabled']", NULL, '"Code snippet (after)" is enabled.');
 
@@ -90,11 +90,11 @@ class GoogleAnalyticsBasicTest extends WebTestBase {
     $this->drupalLogin($this->noSnippetUser);
     $this->drupalGet('admin/config/system/google-analytics');
 
-    // User should *not* have access to snippets, but create fields.
+    // User should *not* have access to snippets, but parameters field.
     $this->assertFieldByName('google_analytics_codesnippet_create');
     $this->assertFieldByName('google_analytics_codesnippet_before');
     $this->assertFieldByName('google_analytics_codesnippet_after');
-    $this->assertNoFieldByXPath("//textarea[@name='google_analytics_codesnippet_create' and @disabled='disabled']", NULL, '"Create only fields" is enabled.');
+    $this->assertNoFieldByXPath("//textarea[@name='google_analytics_codesnippet_create' and @disabled='disabled']", NULL, '"Parameters" field is enabled.');
     $this->assertFieldByXPath("//textarea[@name='google_analytics_codesnippet_before' and @disabled='disabled']", NULL, '"Code snippet (before)" is disabled.');
     $this->assertFieldByXPath("//textarea[@name='google_analytics_codesnippet_after' and @disabled='disabled']", NULL, '"Code snippet (after)" is disabled.');
   }
@@ -294,14 +294,14 @@ class GoogleAnalyticsBasicTest extends WebTestBase {
 
     // Test whether the CREATE and BEFORE and AFTER code is added to the
     // tracking code.
-    $codesnippet_create = [
+    $codesnippet_parameters = [
       'cookie_domain' => 'foo.example.com',
       'cookie_name' => 'myNewName',
       'cookie_expires' => 20000,
       'sample_rate' => 4.3,
     ];
     $this->config('google_analytics.settings')
-      ->set('codesnippet.create', $codesnippet_create)
+      ->set('codesnippet.create', $codesnippet_parameters)
       ->set('codesnippet.before', 'gtag("set", {"currency":"USD"});')
       ->set('codesnippet.after', 'gtag("config", "UA-123456-3", {"groups":"default"});if(1 == 1 && 2 < 3 && 2 > 1){console.log("Google Analytics: Custom condition works.");}')
       ->save();

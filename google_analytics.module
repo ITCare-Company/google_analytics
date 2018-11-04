@@ -255,14 +255,14 @@ function google_analytics_page_attachments(array &$page) {
     $script .= 'gtag("js", new Date());';
 
     // Add any custom code snippets if specified.
-    $codesnippet_create = $config->get('codesnippet.create');
+    $codesnippet_parameters = $config->get('codesnippet.create');
     $codesnippet_before = $config->get('codesnippet.before');
     $codesnippet_after = $config->get('codesnippet.after');
 
     // Build the arguments fields list.
     // https://developers.google.com/analytics/devguides/collection/gtagjs/sending-data
     $arguments = ['groups' => 'default'];
-    $arguments = array_merge($arguments, $codesnippet_create);
+    $arguments = array_merge($arguments, $codesnippet_parameters);
 
     // Domain tracking type.
     global $cookie_domain;
