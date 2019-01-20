@@ -462,11 +462,12 @@ function google_analytics_user_profile_form_submit($form, FormStateInterface $fo
  */
 function google_analytics_cron() {
   $config = \Drupal::config('google_analytics.settings');
+  $request_time = \Drupal::time()->getRequestTime();
 
   // Regenerate the tracking code file every day.
-  if (REQUEST_TIME - \Drupal::state()->get('google_analytics.last_cache') >= 86400 && $config->get('cache')) {
+  if ($request_time - \Drupal::state()->get('google_analytics.last_cache') >= 86400 && $config->get('cache')) {
     _google_analytics_cache('https://www.googletagmanager.com/gtag/js', TRUE);
-    \Drupal::state()->set('google_analytics.last_cache', REQUEST_TIME);
+    \Drupal::state()->set('google_analytics.last_cache', $request_time);
   }
 }
 
