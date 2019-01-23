@@ -133,7 +133,7 @@ class GoogleAnalyticsBasicTest extends WebTestBase {
 
     // Check tracking code visibility.
     $this->drupalGet('');
-    $this->assertRaw('gtag("config", "'. $ua_code . '"', '[testGoogleAnalyticsPageVisibility]: Tracking code is displayed for authenticated users.');
+    $this->assertRaw('gtag("config", "' . $ua_code . '"', '[testGoogleAnalyticsPageVisibility]: Tracking code is displayed for authenticated users.');
 
     // Test whether tracking code is not included on pages to omit.
     $this->drupalGet('admin');
