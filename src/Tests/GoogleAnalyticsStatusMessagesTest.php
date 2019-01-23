@@ -55,7 +55,11 @@ class GoogleAnalyticsStatusMessagesTest extends WebTestBase {
     $this->assertRaw('gtag("event", "Error message", {"event_category":"Messages","event_label":"Example error message with html tags and link."});', '[testGoogleAnalyticsStatusMessages]: HTML has been stripped successful from Example error message with html tags and link.');
 
     // Enable logging of status, warnings and errors.
-    $this->config('google_analytics.settings')->set('track.messages', ['status' => 'status', 'warning' => 'warning', 'error' => 'error'])->save();
+    $this->config('google_analytics.settings')->set('track.messages', [
+      'status' => 'status',
+      'warning' => 'warning',
+      'error' => 'error',
+    ])->save();
 
     $this->drupalGet('google-analytics-test/drupal-messenger-add-message');
     $this->assertRaw('gtag("event", "Status message", {"event_category":"Messages","event_label":"Example status message."});', '[testGoogleAnalyticsStatusMessages]: Example status message is enabled for tracking.');
