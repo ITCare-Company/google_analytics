@@ -17,11 +17,10 @@ class GoogleAnalyticsTestController extends ControllerBase {
    */
   public function drupalAddMessageTest() {
     // Set some messages.
-    $messenger = $this->messenger();
-    $messenger->addMessage($this->t('Example status message.'), 'status');
-    $messenger->addMessage($this->t('Example warning message.'), 'warning');
-    $messenger->addMessage($this->t('Example error message.'), 'error');
-    $messenger->addMessage($this->t('Example error <em>message</em> with html tags and <a href="https://example.com/">link</a>.'), 'error');
+    $this->messenger()->addMessage($this->t('Example status message.'), 'status');
+    $this->messenger()->addMessage($this->t('Example warning message.'), 'warning');
+    $this->messenger()->addMessage($this->t('Example error message.'), 'error');
+    $this->messenger()->addMessage($this->t('Example error <em>message</em> with html tags and <a href="https://example.com/">link</a>.'), 'error');
 
     return [];
   }
