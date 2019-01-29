@@ -17,7 +17,7 @@ class GoogleAnalyticsTestController extends ControllerBase {
    */
   public function drupalAddMessageTest() {
     // Set some messages.
-    $messenger = \Drupal::messenger();
+    $messenger = $this->messenger();
     $messenger->addMessage($this->t('Example status message.'), 'status');
     $messenger->addMessage($this->t('Example warning message.'), 'warning');
     $messenger->addMessage($this->t('Example error message.'), 'error');
