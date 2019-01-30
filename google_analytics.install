@@ -18,7 +18,7 @@ function google_analytics_install() {
   $success = $role->save();
   if ($success) {
     $messenger = \Drupal::messenger();
-    $messenger->addStatus(t('Module %module granted %permission permission to authenticated users.', ['%module' => 'Google Analytics', '%permission' => t('Opt-in or out of tracking')]), 'status');
+    $messenger->addMessage(t('Module %module granted %permission permission to authenticated users.', ['%module' => 'Google Analytics', '%permission' => t('Opt-in or out of tracking')]), 'status');
   }
 }
 
