@@ -236,9 +236,9 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
       '#type' => 'radios',
       '#title' => $this->t('Allow users to customize tracking on their account page'),
       '#options' => [
-        $this->t('No customization allowed'),
-        $this->t('Tracking on by default, users with %permission permission can opt out', $t_permission),
-        $this->t('Tracking off by default, users with %permission permission can opt in', $t_permission),
+        0 => $this->t('No customization allowed'),
+        1 => $this->t('Tracking on by default, users with %permission permission can opt out', $t_permission),
+        2 => $this->t('Tracking off by default, users with %permission permission can opt in', $t_permission),
       ],
       '#default_value' => !empty($visibility_user_account_mode) ? $visibility_user_account_mode : 0,
     ];
