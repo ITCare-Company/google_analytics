@@ -2,7 +2,6 @@
 
 namespace Drupal\google_analytics\Form;
 
-use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Extension\ModuleHandler;
 use Drupal\Core\Form\ConfigFormBase;
@@ -583,7 +582,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
     foreach ($form_state->getValue(['google_analytics_custom_dimension', 'indexes']) as $dimension) {
       $form_state->setValue(['google_analytics_custom_dimension', 'indexes', $dimension['index'], 'value'], trim($dimension['value']));
       // Remove empty values from the array.
-      if (!Unicode::strlen($form_state->getValue(['google_analytics_custom_dimension', 'indexes', $dimension['index'], 'value']))) {
+      if (!mb_strlen($form_state->getValue(['google_analytics_custom_dimension', 'indexes', $dimension['index'], 'value']))) {
         $form_state->unsetValue(['google_analytics_custom_dimension', 'indexes', $dimension['index']]);
       }
     }
@@ -592,7 +591,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
     foreach ($form_state->getValue(['google_analytics_custom_metric', 'indexes']) as $metric) {
       $form_state->setValue(['google_analytics_custom_metric', 'indexes', $metric['index'], 'value'], trim($metric['value']));
       // Remove empty values from the array.
-      if (!Unicode::strlen($form_state->getValue(['google_analytics_custom_metric', 'indexes', $metric['index'], 'value']))) {
+      if (!mb_strlen($form_state->getValue(['google_analytics_custom_metric', 'indexes', $metric['index'], 'value']))) {
         $form_state->unsetValue(['google_analytics_custom_metric', 'indexes', $metric['index']]);
       }
     }
@@ -721,7 +720,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
   public static function tokenElementValidate(&$element, FormStateInterface $form_state) {
     $value = isset($element['#value']) ? $element['#value'] : $element['#default_value'];
 
-    if (!Unicode::strlen($value)) {
+    if (!mb_strlen($value)) {
       // Empty value needs no further validation since the element should depend
       // on using the '#required' FAPI property.
       return $element;
@@ -946,10 +945,10 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
    *   The error message if the specified value is invalid, NULL otherwise.
    */
   protected static function validateParameterValue($value) {
-    if (!is_bool($value) && !Unicode::strlen($value)) {
+    if (!is_bool($value) && !mb_strlen($value)) {
       return t('A parameter requires a value.');
     }
-    if (Unicode::strlen($value) > 255) {
+    if (mb_strlen($value) > 255) {
       return t('The value of a parameter must be a string at most 255 characters long.');
     }
   }
@@ -994,7 +993,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
 
     foreach ($values as $name => $value) {
       // Convert data types.
-      $match = Unicode::strtolower($value);
+      $match = mb_strtolower($value);
       if ($match == 'true') {
         $value = TRUE;
       }

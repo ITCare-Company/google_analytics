@@ -12,7 +12,6 @@
 
 use Drupal\Component\Serialization\Json;
 use Drupal\Component\Utility\Crypt;
-use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
@@ -213,7 +212,7 @@ function google_analytics_page_attachments(array &$page) {
           $google_analytics_custom_var['value'] = \Drupal::token()->replace($google_analytics_custom_var['value'], $types, ['clear' => TRUE]);
 
           // Suppress empty values.
-          if (!Unicode::strlen(trim($google_analytics_custom_var['name'])) || !Unicode::strlen(trim($google_analytics_custom_var['value']))) {
+          if (!mb_strlen(trim($google_analytics_custom_var['name'])) || !mb_strlen(trim($google_analytics_custom_var['value']))) {
             continue;
           }
 
@@ -221,7 +220,7 @@ function google_analytics_page_attachments(array &$page) {
           // A metric has no length limitation. It's not documented if this
           // limit means 150 bytes after url encoding or before.
           // See https://developers.google.com/analytics/devguides/collection/analyticsjs/field-reference#customs
-          if ($google_analytics_custom_type == 'dimension' && Unicode::strlen($google_analytics_custom_var['value']) > 150) {
+          if ($google_analytics_custom_type == 'dimension' && mb_strlen($google_analytics_custom_var['value']) > 150) {
             $google_analytics_custom_var['value'] = substr($google_analytics_custom_var['value'], 0, 150);
           }
 
@@ -668,11 +667,11 @@ function _google_analytics_visibility_pages() {
     if (!empty($visibility_request_path_pages)) {
       // Convert path to lowercase. This allows comparison of the same path
       // with different case. Ex: /Page, /page, /PAGE.
-      $pages = Unicode::strtolower($visibility_request_path_pages);
+      $pages = mb_strtolower($visibility_request_path_pages);
       if ($visibility_request_path_mode < 2) {
         // Compare the lowercase path alias (if any) and internal path.
         $path = \Drupal::service('path.current')->getPath();
-        $path_alias = Unicode::strtolower(\Drupal::service('path.alias_manager')->getAliasByPath($path));
+        $path_alias = mb_strtolower(\Drupal::service('path.alias_manager')->getAliasByPath($path));
         $page_match = \Drupal::service('path.matcher')->matchPath($path_alias, $pages) || (($path != $path_alias) && \Drupal::service('path.matcher')->matchPath($path, $pages));
         // When $visibility_request_path_mode has a value of 0, the tracking
         // code is displayed on all pages except those listed in $pages. When
