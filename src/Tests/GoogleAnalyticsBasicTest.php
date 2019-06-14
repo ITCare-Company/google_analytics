@@ -4,6 +4,7 @@ namespace Drupal\google_analytics\Tests;
 
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Url;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\simpletest\WebTestBase;
 
 /**
@@ -12,6 +13,8 @@ use Drupal\simpletest\WebTestBase;
  * @group Google Analytics
  */
 class GoogleAnalyticsBasicTest extends WebTestBase {
+
+  use StringTranslationTrait;
 
   /**
    * User without permissions to use snippets.
@@ -71,12 +74,12 @@ class GoogleAnalyticsBasicTest extends WebTestBase {
 
     // Check for setting page's presence.
     $this->drupalGet('admin/config/system/google-analytics');
-    $this->assertRaw(t('Web Property ID'), '[testGoogleAnalyticsConfiguration]: Settings page displayed.');
+    $this->assertRaw($this->t('Web Property ID'), '[testGoogleAnalyticsConfiguration]: Settings page displayed.');
 
     // Check for account code validation.
     $edit['google_analytics_account'] = $this->randomMachineName(2);
-    $this->drupalPostForm('admin/config/system/google-analytics', $edit, t('Save configuration'));
-    $this->assertRaw(t('A valid Google Analytics Web Property ID is case sensitive and formatted like UA-xxxxxxx-yy.'), '[testGoogleAnalyticsConfiguration]: Invalid Web Property ID number validated.');
+    $this->drupalPostForm('admin/config/system/google-analytics', $edit, $this->t('Save configuration'));
+    $this->assertRaw($this->t('A valid Google Analytics Web Property ID is case sensitive and formatted like UA-xxxxxxx-yy.'), '[testGoogleAnalyticsConfiguration]: Invalid Web Property ID number validated.');
 
     // User should have access to code snippets.
     $this->assertFieldByName('google_analytics_codesnippet_create');
@@ -285,7 +288,7 @@ class GoogleAnalyticsBasicTest extends WebTestBase {
     // Check if text and link is shown on 'Status Reports' page.
     // Requires 'administer site configuration' permission.
     $this->drupalGet('admin/reports/status');
-    $this->assertRaw(t('Google Analytics module has debugging enabled. Please disable debugging setting in production sites from the <a href=":url">Google Analytics settings page</a>.', [':url' => Url::fromRoute('google_analytics.admin_settings_form')->toString()]), '[testGoogleAnalyticsConfiguration]: Debugging enabled is shown on Status Reports page.');
+    $this->assertRaw($this->t('Google Analytics module has debugging enabled. Please disable debugging setting in production sites from the <a href=":url">Google Analytics settings page</a>.', [':url' => Url::fromRoute('google_analytics.admin_settings_form')->toString()]), '[testGoogleAnalyticsConfiguration]: Debugging enabled is shown on Status Reports page.');
 
     // Test whether debugging script has been disabled.
     $this->config('google_analytics.settings')->set('debug', 0)->save();

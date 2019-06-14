@@ -2,6 +2,7 @@
 
 namespace Drupal\google_analytics\Tests;
 
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\simpletest\WebTestBase;
 
 /**
@@ -10,6 +11,8 @@ use Drupal\simpletest\WebTestBase;
  * @group Google Analytics
  */
 class GoogleAnalyticsUninstallTest extends WebTestBase {
+
+  use StringTranslationTrait;
 
   /**
    * Modules to enable.
@@ -59,10 +62,10 @@ class GoogleAnalyticsUninstallTest extends WebTestBase {
     // Uninstall the module.
     $edit = [];
     $edit['uninstall[google_analytics]'] = TRUE;
-    $this->drupalPostForm('admin/modules/uninstall', $edit, t('Uninstall'));
+    $this->drupalPostForm('admin/modules/uninstall', $edit, $this->t('Uninstall'));
     $this->assertNoText(\Drupal::translation()->translate('Configuration deletions'), 'No configuration deletions listed on the module install confirmation page.');
-    $this->drupalPostForm(NULL, NULL, t('Uninstall'));
-    $this->assertText(t('The selected modules have been uninstalled.'), 'Modules status has been updated.');
+    $this->drupalPostForm(NULL, NULL, $this->t('Uninstall'));
+    $this->assertText($this->t('The selected modules have been uninstalled.'), 'Modules status has been updated.');
 
     // Test if the directory and all files have been removed.
     $this->assertFalse(file_scan_directory($cache_path, '/.*/'), 'Cached JavaScript files have been removed.');

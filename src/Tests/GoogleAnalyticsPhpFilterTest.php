@@ -3,6 +3,7 @@
 namespace Drupal\google_analytics\Tests;
 
 use Drupal\Component\Utility\Html;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\simpletest\WebTestBase;
 
 /**
@@ -13,6 +14,8 @@ use Drupal\simpletest\WebTestBase;
  * @dependencies php
  */
 class GoogleAnalyticsPhpFilterTest extends WebTestBase {
+
+  use StringTranslationTrait;
 
   /**
    * Modules to enable.
@@ -54,7 +57,7 @@ class GoogleAnalyticsPhpFilterTest extends WebTestBase {
     $edit['google_analytics_account'] = $ua_code;
     $edit['google_analytics_visibility_request_path_mode'] = 2;
     $edit['google_analytics_visibility_request_path_pages'] = '<?php return 0; ?>';
-    $this->drupalPostForm('admin/config/system/google-analytics', $edit, t('Save configuration'));
+    $this->drupalPostForm('admin/config/system/google-analytics', $edit, $this->t('Save configuration'));
 
     // Compare saved setting with posted setting.
     $google_analytics_pages = \Drupal::config('google_analytics.settings')->get('visibility.request_path_pages');
@@ -74,13 +77,13 @@ class GoogleAnalyticsPhpFilterTest extends WebTestBase {
     // Test administration form.
     $this->config('google_analytics.settings')->set('visibility.request_path_pages', '<?php return TRUE; ?>')->save();
     $this->drupalGet('admin/config/system/google-analytics');
-    $this->assertRaw(t('Pages on which this PHP code returns <code>TRUE</code> (experts only)'), '[testGoogleAnalyticsPhpFilter]: Permission to administer PHP for tracking visibility.');
+    $this->assertRaw($this->t('Pages on which this PHP code returns <code>TRUE</code> (experts only)'), '[testGoogleAnalyticsPhpFilter]: Permission to administer PHP for tracking visibility.');
     $this->assertRaw(Html::escape('<?php return TRUE; ?>'), '[testGoogleAnalyticsPhpFilter]: PHP code snippted is displayed.');
 
     // Login the delegated user and check if fields are visible.
     $this->drupalLogin($this->delegated_admin_user);
     $this->drupalGet('admin/config/system/google-analytics');
-    $this->assertNoRaw(t('Pages on which this PHP code returns <code>TRUE</code> (experts only)'), '[testGoogleAnalyticsPhpFilter]: No permission to administer PHP for tracking visibility.');
+    $this->assertNoRaw($this->t('Pages on which this PHP code returns <code>TRUE</code> (experts only)'), '[testGoogleAnalyticsPhpFilter]: No permission to administer PHP for tracking visibility.');
     $this->assertNoRaw(Html::escape('<?php return TRUE; ?>'), '[testGoogleAnalyticsPhpFilter]: No permission to view PHP code snippted.');
 
     // Set a different value and verify that this is still the same after the
@@ -89,7 +92,7 @@ class GoogleAnalyticsPhpFilterTest extends WebTestBase {
 
     $edit = [];
     $edit['google_analytics_account'] = $ua_code;
-    $this->drupalPostForm('admin/config/system/google-analytics', $edit, t('Save configuration'));
+    $this->drupalPostForm('admin/config/system/google-analytics', $edit, $this->t('Save configuration'));
 
     // Compare saved setting with posted setting.
     $google_analytics_visibility_pages = \Drupal::config('google_analytics.settings')->get('visibility.request_path_mode');

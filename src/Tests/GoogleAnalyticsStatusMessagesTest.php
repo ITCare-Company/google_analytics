@@ -2,6 +2,7 @@
 
 namespace Drupal\google_analytics\Tests;
 
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Drupal\simpletest\WebTestBase;
 
 /**
@@ -10,6 +11,8 @@ use Drupal\simpletest\WebTestBase;
  * @group Google Analytics
  */
 class GoogleAnalyticsStatusMessagesTest extends WebTestBase {
+
+  use StringTranslationTrait;
 
   /**
    * Modules to enable.
@@ -43,7 +46,7 @@ class GoogleAnalyticsStatusMessagesTest extends WebTestBase {
     // Enable logging of errors only.
     $this->config('google_analytics.settings')->set('track.messages', ['error' => 'error'])->save();
 
-    $this->drupalPostForm('user/login', [], t('Log in'));
+    $this->drupalPostForm('user/login', [], $this->t('Log in'));
     $this->assertRaw('gtag("event", "Error message", {"event_category":"Messages","event_label":"Username field is required."});', '[testGoogleAnalyticsStatusMessages]: Event message "Username field is required." is shown.');
     $this->assertRaw('gtag("event", "Error message", {"event_category":"Messages","event_label":"Password field is required."});', '[testGoogleAnalyticsStatusMessages]: Event message "Password field is required." is shown.');
 

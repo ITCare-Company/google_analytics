@@ -3,6 +3,7 @@
 namespace Drupal\google_analytics\Tests;
 
 use Drupal\simpletest\WebTestBase;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 
 /**
  * Test user fields functionality of Google Analytics module.
@@ -10,6 +11,8 @@ use Drupal\simpletest\WebTestBase;
  * @group Google Analytics
  */
 class GoogleAnalyticsUserFieldsTest extends WebTestBase {
+
+  use StringTranslationTrait;
 
   /**
    * Modules to enable.
@@ -45,27 +48,27 @@ class GoogleAnalyticsUserFieldsTest extends WebTestBase {
     // Check if the pseudo field is shown on account forms.
     $this->drupalGet('admin/config/people/accounts/form-display');
     $this->assertResponse(200);
-    $this->assertRaw(t('Google Analytics settings'), '[testGoogleAnalyticsUserFields]: Google Analytics settings field exists on Manage form display.');
+    $this->assertRaw($this->t('Google Analytics settings'), '[testGoogleAnalyticsUserFields]: Google Analytics settings field exists on Manage form display.');
 
     // No customization allowed.
     $this->config('google_analytics.settings')->set('visibility.user_account_mode', 0)->save();
     $this->drupalGet('user/' . $this->admin_user->id() . '/edit');
     $this->assertResponse(200);
-    $this->assertNoRaw(t('Google Analytics settings'), '[testGoogleAnalyticsUserFields]: Google Analytics settings field does not exist on user edit page.');
+    $this->assertNoRaw($this->t('Google Analytics settings'), '[testGoogleAnalyticsUserFields]: Google Analytics settings field does not exist on user edit page.');
 
     // Tracking on by default, users with opt-in or out of tracking permission
     // can opt out.
     $this->config('google_analytics.settings')->set('visibility.user_account_mode', 1)->save();
     $this->drupalGet('user/' . $this->admin_user->id() . '/edit');
     $this->assertResponse(200);
-    $this->assertRaw(t('Users are tracked by default, but you are able to opt out.'), '[testGoogleAnalyticsUserFields]: Google Analytics settings field exists on on user edit page');
+    $this->assertRaw($this->t('Users are tracked by default, but you are able to opt out.'), '[testGoogleAnalyticsUserFields]: Google Analytics settings field exists on on user edit page');
 
     // Tracking off by default, users with opt-in or out of tracking permission
     // can opt in.
     $this->config('google_analytics.settings')->set('visibility.user_account_mode', 2)->save();
     $this->drupalGet('user/' . $this->admin_user->id() . '/edit');
     $this->assertResponse(200);
-    $this->assertRaw(t('Users are <em>not</em> tracked by default, but you are able to opt in.'), '[testGoogleAnalyticsUserFields]: Google Analytics settings field exists on on user edit page.');
+    $this->assertRaw($this->t('Users are <em>not</em> tracked by default, but you are able to opt in.'), '[testGoogleAnalyticsUserFields]: Google Analytics settings field exists on on user edit page.');
   }
 
 }
