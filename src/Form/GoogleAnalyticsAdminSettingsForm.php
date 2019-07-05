@@ -909,6 +909,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
       'cookie_name',
       'cookie_domain',
       'cookie_expires',
+      'optimize_id',
       'sample_rate',
       'send_page_view',
       'site_speed_sample_rate',
