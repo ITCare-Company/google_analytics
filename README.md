@@ -1,5 +1,4 @@
-CONTENTS OF THIS FILE
----------------------
+## CONTENTS OF THIS FILE
 
  * Introduction
  * Requirements
@@ -13,8 +12,7 @@ CONTENTS OF THIS FILE
  * Maintainers
 
 
-INTRODUCTION
-------------
+## INTRODUCTION
 
 The module provides
 
@@ -25,22 +23,19 @@ The module provides
    https://www.drupal.org/project/issues/google_analytics
 
 
-REQUIREMENTS
-------------
+## REQUIREMENTS
 
 This module requires no modules outside of Drupal core.
 
 
-INSTALLATION
-------------
+## INSTALLATION
 
  * Install the Google Analytics module as you would normally install a
    contributed Drupal module. Visit https://www.drupal.org/node/1897420 for
    further information.
 
 
-CONFIGURATION
--------------
+## CONFIGURATION
 
     1. Navigate to Administration > Extend and enable the module.
     2. Navigate to Administration > Configuration > System > Google Analytics
@@ -50,8 +45,7 @@ CONFIGURATION
        can confirm this by viewing the page source from the browser.
 
 
-PAGE SPECIFIC TRACKING
-----------------------
+## PAGE SPECIFIC TRACKING
 
 The default is set to "Add to every page except the listed pages". By
 default the following pages are listed for exclusion:
@@ -74,8 +68,7 @@ used in this textarea can be found on the handbook page "Overview-approach to
 block visibility" at https://drupal.org/node/64135.
 
 
-CUSTOM DIMENSIONS AND METRICS
------------------------------
+## CUSTOM DIMENSIONS AND METRICS
 
 One example for custom dimensions tracking is the "User roles" tracking.
 
@@ -95,8 +88,7 @@ More details about custom dimensions and metrics can be found in the Google API
 documentation at https://developers.google.com/analytics/devguides/collection/analyticsjs/custom-dims-mets.
 
 
-ADVANCED SETTINGS
------------------
+## ADVANCED SETTINGS
 
 You can include additional JavaScript snippets in the custom javascript
 code textarea. These can be found on the official Google Analytics pages
@@ -107,8 +99,7 @@ To speed up page loading you may also cache the Google Analytics "analytics.js"
 file locally.
 
 
-MANUAL JS DEBBUGING
--------------------
+## MANUAL JS DEBBUGING
 
 For manual debugging of the JS code you are able to create a test node. This
 is the example HTML code for this test node. You need to enable debugging mode
@@ -130,8 +121,7 @@ Body:
 Text format: Full HTML
 
 
-USAGE
------
+## USAGE
 
 In the settings page enter your Google Analytics account number.
 
@@ -139,7 +129,6 @@ All pages will now have the required JavaScript added to the HTML footer can
 confirm this by viewing the page source from our browser.
 
 
-MAINTAINERS
------------
+## MAINTAINERS
 
- * Alexander Hass (hass) - https://www.drupal.org/u/hass
+ * Alexander Hass (hass) - https://www.drupal.org/user/85918
