@@ -16,12 +16,29 @@ use Drupal\google_analytics\GoogleAnalitycsInterface;
  */
 class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
 
+  /**
+   * The manages modules.
+   *
+   * @var \Drupal\Core\Extension\ModuleHandlerInterface
+   */
   protected $moduleHandler;
 
+  /**
+   * The current user.
+   *
+   * @var \Drupal\Core\Session\AccountInterface
+   */
   protected $currentUser;
 
   /**
-   * {@inheritdoc}
+   * The constructor method.
+   *
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The config factory.
+   * @param \Drupal\Core\Session\AccountInterface $currentUser
+   *   The current user.
+   * @param \Drupal\Core\Extension\ModuleHandlerInterface $moduleHandler
+   *   The manages modules.
    */
   public function __construct(ConfigFactoryInterface $config_factory, AccountInterface $currentUser, ModuleHandlerInterface $moduleHandler) {
     parent::__construct($config_factory);
