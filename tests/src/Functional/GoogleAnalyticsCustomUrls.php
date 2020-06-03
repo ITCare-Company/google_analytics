@@ -1,16 +1,16 @@
 <?php
 
-namespace Drupal\google_analytics\Tests;
+namespace Drupal\Tests\google_analytics\Functional;
 
 use Drupal\Component\Serialization\Json;
-use Drupal\simpletest\WebTestBase;
+use Drupal\Tests\BrowserTestBase;
 
 /**
  * Test custom url functionality of Google Analytics module.
  *
  * @group Google Analytics
  */
-class GoogleAnalyticsCustomUrls extends WebTestBase {
+class GoogleAnalyticsCustomUrls extends BrowserTestBase {
 
   /**
    * Modules to enable.
@@ -18,6 +18,20 @@ class GoogleAnalyticsCustomUrls extends WebTestBase {
    * @var array
    */
   public static $modules = ['google_analytics'];
+
+  /**
+   * Default theme.
+   *
+   * @var string
+   */
+  protected $defaultTheme = 'stark';
+
+  /**
+   * Admin user.
+   *
+   * @var \Drupal\user\Entity\User|bool
+   */
+  protected $adminUser;
 
   /**
    * {@inheritdoc}
@@ -33,7 +47,7 @@ class GoogleAnalyticsCustomUrls extends WebTestBase {
     ];
 
     // User to set up google_analytics.
-    $this->admin_user = $this->drupalCreateUser($permissions);
+    $this->adminUser = $this->drupalCreateUser($permissions);
   }
 
   /**
@@ -55,17 +69,17 @@ class GoogleAnalyticsCustomUrls extends WebTestBase {
     $this->assertRaw('gtag("config", ' . Json::encode($ua_code) . ', {"groups":"default","page_path":"' . $base_path . 'user/password"});');
 
     $this->drupalGet('user/password');
-    $this->assertNoRaw('"page_path":"' . $base_path . 'user/password"});', '[testGoogleAnalyticsCustomUrls]: Custom url not set.');
+    $this->assertNoRaw('"page_path":"' . $base_path . 'user/password"});');
 
     // Test whether 403 forbidden tracking code is shown if user has no access.
     $this->drupalGet('admin');
     $this->assertResponse(403);
-    $this->assertRaw($base_path . '403.html', '[testGoogleAnalyticsCustomUrls]: 403 Forbidden tracking code shown if user has no access.');
+    $this->assertRaw($base_path . '403.html');
 
     // Test whether 404 not found tracking code is shown on non-existent pages.
     $this->drupalGet($this->randomMachineName(64));
     $this->assertResponse(404);
-    $this->assertRaw($base_path . '404.html', '[testGoogleAnalyticsCustomUrls]: 404 Not Found tracking code shown on non-existent page.');
+    $this->assertRaw($base_path . '404.html');
   }
 
 }

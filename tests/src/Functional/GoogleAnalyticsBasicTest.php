@@ -1,18 +1,18 @@
 <?php
 
-namespace Drupal\google_analytics\Tests;
+namespace Drupal\Tests\google_analytics\Functional;
 
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Url;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\simpletest\WebTestBase;
+use Drupal\Tests\BrowserTestBase;
 
 /**
  * Test basic functionality of Google Analytics module.
  *
  * @group Google Analytics
  */
-class GoogleAnalyticsBasicTest extends WebTestBase {
+class GoogleAnalyticsBasicTest extends BrowserTestBase {
 
   use StringTranslationTrait;
 
@@ -24,6 +24,13 @@ class GoogleAnalyticsBasicTest extends WebTestBase {
   protected $noSnippetUser;
 
   /**
+   * Admin user.
+   *
+   * @var \Drupal\user\Entity\User|bool
+   */
+  protected $adminUser;
+
+  /**
    * Modules to enable.
    *
    * @var array
@@ -33,6 +40,13 @@ class GoogleAnalyticsBasicTest extends WebTestBase {
     'google_analytics',
     'help',
   ];
+
+  /**
+   * Default theme.
+   *
+   * @var string
+   */
+  protected $defaultTheme = 'stark';
 
   /**
    * {@inheritdoc}
@@ -50,8 +64,8 @@ class GoogleAnalyticsBasicTest extends WebTestBase {
     // User to set up google_analytics.
     $this->noSnippetUser = $this->drupalCreateUser($permissions);
     $permissions[] = 'add JS snippets for google analytics';
-    $this->admin_user = $this->drupalCreateUser($permissions);
-    $this->drupalLogin($this->admin_user);
+    $this->adminUser = $this->drupalCreateUser($permissions);
+    $this->drupalLogin($this->adminUser);
 
     // Place the block or the help is not shown.
     $this->drupalPlaceBlock('help_block', ['region' => 'help']);
@@ -64,22 +78,22 @@ class GoogleAnalyticsBasicTest extends WebTestBase {
     // Check if Configure link is available on 'Extend' page.
     // Requires 'administer modules' permission.
     $this->drupalGet('admin/modules');
-    $this->assertRaw('admin/config/system/google-analytics', '[testGoogleAnalyticsConfiguration]: Configure link from Extend page to Google Analytics Settings page exists.');
+    $this->assertRaw('admin/config/system/google-analytics');
 
     // Check if Configure link is available on 'Status Reports' page.
     // NOTE: Link is only shown without UA code configured.
     // Requires 'administer site configuration' permission.
     $this->drupalGet('admin/reports/status');
-    $this->assertRaw('admin/config/system/google-analytics', '[testGoogleAnalyticsConfiguration]: Configure link from Status Reports page to Google Analytics Settings page exists.');
+    $this->assertRaw('admin/config/system/google-analytics');
 
     // Check for setting page's presence.
     $this->drupalGet('admin/config/system/google-analytics');
-    $this->assertRaw($this->t('Web Property ID'), '[testGoogleAnalyticsConfiguration]: Settings page displayed.');
+    $this->assertRaw($this->t('Web Property ID'));
 
     // Check for account code validation.
     $edit['google_analytics_account'] = $this->randomMachineName(2);
     $this->drupalPostForm('admin/config/system/google-analytics', $edit, $this->t('Save configuration'));
-    $this->assertRaw($this->t('A valid Google Analytics Web Property ID is case sensitive and formatted like UA-xxxxxxx-yy.'), '[testGoogleAnalyticsConfiguration]: Invalid Web Property ID number validated.');
+    $this->assertRaw($this->t('A valid Google Analytics Web Property ID is case sensitive and formatted like UA-xxxxxxx-yy.'));
 
     // User should have access to code snippets.
     $this->assertFieldByName('google_analytics_codesnippet_create');
@@ -108,11 +122,11 @@ class GoogleAnalyticsBasicTest extends WebTestBase {
   public function testGoogleAnalyticsHelp() {
     // Requires help and block module and help block placement.
     $this->drupalGet('admin/config/system/google-analytics');
-    $this->assertText('Google Analytics is a free (registration required) website traffic and marketing effectiveness service.', '[testGoogleAnalyticsHelp]: Google Analytics help text shown on module settings page.');
+    $this->assertText('Google Analytics is a free (registration required) website traffic and marketing effectiveness service.');
 
     // Requires help.module.
     $this->drupalGet('admin/help/google_analytics');
-    $this->assertText('Google Analytics adds a web statistics tracking system to your website.', '[testGoogleAnalyticsHelp]: Google Analytics help text shown in help section.');
+    $this->assertText('Google Analytics adds a web statistics tracking system to your website.');
   }
 
   /**
@@ -122,7 +136,7 @@ class GoogleAnalyticsBasicTest extends WebTestBase {
     // Verify that no tracking code is embedded into the webpage; if there is
     // only the module installed, but UA code not configured. See #2246991.
     $this->drupalGet('');
-    $this->assertNoRaw('https://www.googletagmanager.com/gtag/js?id=', '[testGoogleAnalyticsPageVisibility]: Tracking code is not displayed without UA code configured.');
+    $this->assertNoRaw('https://www.googletagmanager.com/gtag/js?id=');
 
     $ua_code = 'UA-123456-1';
     $this->config('google_analytics.settings')->set('account', $ua_code)->save();
@@ -136,29 +150,29 @@ class GoogleAnalyticsBasicTest extends WebTestBase {
 
     // Check tracking code visibility.
     $this->drupalGet('');
-    $this->assertRaw('gtag("config", "' . $ua_code . '"', '[testGoogleAnalyticsPageVisibility]: Tracking code is displayed for authenticated users.');
+    $this->assertRaw('gtag("config", "' . $ua_code . '"');
 
     // Test whether tracking code is not included on pages to omit.
     $this->drupalGet('admin');
-    $this->assertNoRaw($ua_code, '[testGoogleAnalyticsPageVisibility]: Tracking code is not displayed on admin page.');
+    $this->assertNoRaw($ua_code);
     $this->drupalGet('admin/config/system/google-analytics');
     // Checking for tracking URI here, as $ua_code is displayed in the form.
-    $this->assertNoRaw('https://www.googletagmanager.com/gtag/js?id=', '[testGoogleAnalyticsPageVisibility]: Tracking code is not displayed on admin subpage.');
+    $this->assertNoRaw('https://www.googletagmanager.com/gtag/js?id=');
 
     // Test whether tracking code display is properly flipped.
     $this->config('google_analytics.settings')->set('visibility.request_path_mode', 1)->save();
     $this->drupalGet('admin');
-    $this->assertRaw($ua_code, '[testGoogleAnalyticsPageVisibility]: Tracking code is displayed on admin page.');
+    $this->assertRaw($ua_code);
     $this->drupalGet('admin/config/system/google-analytics');
     // Checking for tracking URI here, as $ua_code is displayed in the form.
-    $this->assertRaw('https://www.googletagmanager.com/gtag/js?id=', '[testGoogleAnalyticsPageVisibility]: Tracking code is displayed on admin subpage.');
+    $this->assertRaw('https://www.googletagmanager.com/gtag/js?id=');
     $this->drupalGet('');
-    $this->assertNoRaw($ua_code, '[testGoogleAnalyticsPageVisibility]: Tracking code is NOT displayed on front page.');
+    $this->assertNoRaw($ua_code);
 
     // Test whether tracking code is not display for anonymous.
     $this->drupalLogout();
     $this->drupalGet('');
-    $this->assertNoRaw($ua_code, '[testGoogleAnalyticsPageVisibility]: Tracking code is NOT displayed for anonymous.');
+    $this->assertNoRaw($ua_code);
 
     // Switch back to every page except the listed pages.
     $this->config('google_analytics.settings')->set('visibility.request_path_mode', 0)->save();
@@ -200,56 +214,56 @@ class GoogleAnalyticsBasicTest extends WebTestBase {
     // Enable anonymizing of IP addresses.
     $this->config('google_analytics.settings')->set('privacy.anonymizeip', 1)->save();
     $this->drupalGet('');
-    $this->assertRaw('"anonymize_ip":true', '[testGoogleAnalyticsTrackingCode]: Anonymize visitors IP address found on frontpage.');
+    $this->assertRaw('"anonymize_ip":true');
 
     // Test whether anonymize visitors IP address feature has been enabled.
     $this->config('google_analytics.settings')->set('privacy.anonymizeip', 0)->save();
     $this->drupalGet('');
-    $this->assertNoRaw('"anonymize_ip":true', '[testGoogleAnalyticsTrackingCode]: Anonymize visitors IP address not found on frontpage.');
+    $this->assertNoRaw('"anonymize_ip":true');
 
     // Test if track Enhanced Link Attribution is enabled.
     $this->config('google_analytics.settings')->set('track.linkid', 1)->save();
     $this->drupalGet('');
-    $this->assertRaw('"link_attribution":true', '[testGoogleAnalyticsTrackingCode]: Tracking code for Enhanced Link Attribution is enabled.');
+    $this->assertRaw('"link_attribution":true');
 
     // Test if track Enhanced Link Attribution is disabled.
     $this->config('google_analytics.settings')->set('track.linkid', 0)->save();
     $this->drupalGet('');
-    $this->assertNoRaw('"link_attribution":true', '[testGoogleAnalyticsTrackingCode]: Tracking code for Enhanced Link Attribution is not enabled.');
+    $this->assertNoRaw('"link_attribution":true');
 
     // Test if tracking of User ID is enabled.
     $this->config('google_analytics.settings')->set('track.userid', 1)->save();
     $this->drupalGet('');
-    $this->assertRaw('"user_id":"', '[testGoogleAnalyticsTrackingCode]: Tracking code for User ID is enabled.');
+    $this->assertRaw('"user_id":"');
 
     // Test if tracking of User ID is disabled.
     $this->config('google_analytics.settings')->set('track.userid', 0)->save();
     $this->drupalGet('');
-    $this->assertNoRaw('"user_id":"', '[testGoogleAnalyticsTrackingCode]: Tracking code for User ID is disabled.');
+    $this->assertNoRaw('"user_id":"');
 
     // Test if track display features is disabled.
     $this->config('google_analytics.settings')->set('track.displayfeatures', 0)->save();
     $this->drupalGet('');
-    $this->assertRaw('"allow_ad_personalization_signals":false', '[testGoogleAnalyticsTrackingCode]: Tracking code for display features is not enabled.');
+    $this->assertRaw('"allow_ad_personalization_signals":false');
 
     // Test if track display features is enabled.
     $this->config('google_analytics.settings')->set('track.displayfeatures', 1)->save();
     $this->drupalGet('');
-    $this->assertNoRaw('"allow_ad_personalization_signals":false', '[testGoogleAnalyticsTrackingCode]: Tracking code for display features is enabled.');
+    $this->assertNoRaw('"allow_ad_personalization_signals":false');
 
     // Test if tracking of url fragments is enabled.
     $this->config('google_analytics.settings')->set('track.urlfragments', 1)->save();
     $this->drupalGet('');
-    $this->assertRaw('"page_path":location.pathname + location.search + location.hash});', '[testGoogleAnalyticsTrackingCode]: Tracking code for url fragments is enabled.');
+    $this->assertRaw('"page_path":location.pathname + location.search + location.hash});');
 
     // Test if tracking of url fragments is disabled.
     $this->config('google_analytics.settings')->set('track.urlfragments', 0)->save();
     $this->drupalGet('');
-    $this->assertNoRaw('"page_path":location.pathname + location.search + location.hash});', '[testGoogleAnalyticsTrackingCode]: Tracking code for url fragments is not enabled.');
+    $this->assertNoRaw('"page_path":location.pathname + location.search + location.hash});');
 
     // Test whether single domain tracking is active.
     $this->drupalGet('');
-    $this->assertRaw('{"groups":"default"}', '[testGoogleAnalyticsTrackingCode]: Single domain tracking is active.');
+    $this->assertRaw('{"groups":"default"}');
 
     // Enable "One domain with multiple subdomains".
     $this->config('google_analytics.settings')->set('domain_mode', 1)->save();
@@ -260,11 +274,11 @@ class GoogleAnalyticsBasicTest extends WebTestBase {
     // reliable.
     global $cookie_domain;
     if (count(explode('.', $cookie_domain)) > 2 && !is_numeric(str_replace('.', '', $cookie_domain))) {
-      $this->assertRaw('"cookie_domain":"' . $cookie_domain . '"', '[testGoogleAnalyticsTrackingCode]: One domain with multiple subdomains is active on real host.');
+      $this->assertRaw('"cookie_domain":"' . $cookie_domain . '"');
     }
     else {
       // Special cases, Localhost and IP addresses don't show 'cookieDomain'.
-      $this->assertNoRaw('"cookie_domain":"' . $cookie_domain . '"', '[testGoogleAnalyticsTrackingCode]: One domain with multiple subdomains may be active on localhost (test result is not reliable).');
+      $this->assertNoRaw('"cookie_domain":"' . $cookie_domain . '"');
     }
 
     // Enable "Multiple top-level domains" tracking.
@@ -273,27 +287,27 @@ class GoogleAnalyticsBasicTest extends WebTestBase {
       ->set('cross_domains', "www.example.com\nwww.example.net")
       ->save();
     $this->drupalGet('');
-    $this->assertRaw('gtag("config", "' . $ua_code . '", {"groups":"default","linker":', '[testGoogleAnalyticsTrackingCode]: "linker" has been found. Cross domain tracking is active.');
-    $this->assertRaw('gtag("config", "' . $ua_code . '", {"groups":"default","linker":{"domains":["www.example.com","www.example.net"]}});', '[testGoogleAnalyticsTrackingCode]: "domains" has been found. Cross domain tracking is active.');
-    $this->assertRaw('"trackDomainMode":2,', '[testGoogleAnalyticsTrackingCode]: Domain mode value is of type integer.');
-    $this->assertRaw('"trackCrossDomains":["www.example.com","www.example.net"]', '[testGoogleAnalyticsTrackingCode]: Cross domain tracking with www.example.com and www.example.net is active.');
+    $this->assertRaw('gtag("config", "' . $ua_code . '", {"groups":"default","linker":');
+    $this->assertRaw('gtag("config", "' . $ua_code . '", {"groups":"default","linker":{"domains":["www.example.com","www.example.net"]}});');
+    $this->assertRaw('"trackDomainMode":2,');
+    $this->assertRaw('"trackCrossDomains":["www.example.com","www.example.net"]');
     $this->config('google_analytics.settings')->set('domain_mode', 0)->save();
 
     // Test whether debugging script has been enabled.
     $this->config('google_analytics.settings')->set('debug', 1)->save();
     $this->drupalGet('');
     // @FIXME
-    //$this->assertRaw('https://www.google-analytics.com/analytics_debug.js', '[testGoogleAnalyticsTrackingCode]: Google debugging script has been enabled.');
+    //$this->assertRaw('https://www.google-analytics.com/analytics_debug.js');
 
     // Check if text and link is shown on 'Status Reports' page.
     // Requires 'administer site configuration' permission.
     $this->drupalGet('admin/reports/status');
-    $this->assertRaw($this->t('Google Analytics module has debugging enabled. Please disable debugging setting in production sites from the <a href=":url">Google Analytics settings page</a>.', [':url' => Url::fromRoute('google_analytics.admin_settings_form')->toString()]), '[testGoogleAnalyticsConfiguration]: Debugging enabled is shown on Status Reports page.');
+    $this->assertRaw($this->t('Google Analytics module has debugging enabled. Please disable debugging setting in production sites from the <a href=":url">Google Analytics settings page</a>.', [':url' => Url::fromRoute('google_analytics.admin_settings_form')->toString()]));
 
     // Test whether debugging script has been disabled.
     $this->config('google_analytics.settings')->set('debug', 0)->save();
     $this->drupalGet('');
-    $this->assertRaw('https://www.googletagmanager.com/gtag/js?id=', '[testGoogleAnalyticsTrackingCode]: Google debugging script has been disabled.');
+    $this->assertRaw('https://www.googletagmanager.com/gtag/js?id=');
 
     // Test whether the CREATE and BEFORE and AFTER code is added to the
     // tracking code.
@@ -309,10 +323,10 @@ class GoogleAnalyticsBasicTest extends WebTestBase {
       ->set('codesnippet.after', 'gtag("config", "UA-123456-3", {"groups":"default"});if(1 == 1 && 2 < 3 && 2 > 1){console.log("Google Analytics: Custom condition works.");}')
       ->save();
     $this->drupalGet('');
-    $this->assertRaw('gtag("config", "' . $ua_code . '", {"groups":"default","cookie_domain":"foo.example.com","cookie_name":"myNewName","cookie_expires":20000,"sample_rate":4.3});', '[testGoogleAnalyticsTrackingCode]: Config parameters have been found.');
-    $this->assertRaw('gtag("set", {"currency":"USD"});', '[testGoogleAnalyticsTrackingCode]: Before codesnippet has been found.');
-    $this->assertRaw('gtag("config", "UA-123456-3", {"groups":"default"});', '[testGoogleAnalyticsTrackingCode]: After codesnippet custom UA code has been found.');
-    $this->assertRaw('if(1 == 1 && 2 < 3 && 2 > 1){console.log("Google Analytics: Custom condition works.");}', '[testGoogleAnalyticsTrackingCode]: JavaScript code is not HTML escaped.');
+    $this->assertRaw('gtag("config", "' . $ua_code . '", {"groups":"default","cookie_domain":"foo.example.com","cookie_name":"myNewName","cookie_expires":20000,"sample_rate":4.3});');
+    $this->assertRaw('gtag("set", {"currency":"USD"});');
+    $this->assertRaw('gtag("config", "UA-123456-3", {"groups":"default"});');
+    $this->assertRaw('if(1 == 1 && 2 < 3 && 2 > 1){console.log("Google Analytics: Custom condition works.");}');
   }
 
 }

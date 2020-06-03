@@ -1,10 +1,10 @@
 <?php
 
-namespace Drupal\google_analytics\Tests;
+namespace Drupal\Tests\google_analytics\Functional;
 
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\simpletest\WebTestBase;
+use Drupal\Tests\BrowserTestBase;
 
 /**
  * Test custom dimensions and metrics functionality of Google Analytics module.
@@ -13,7 +13,7 @@ use Drupal\simpletest\WebTestBase;
  *
  * @dependencies token
  */
-class GoogleAnalyticsCustomDimensionsAndMetricsTest extends WebTestBase {
+class GoogleAnalyticsCustomDimensionsAndMetricsTest extends BrowserTestBase {
 
   use StringTranslationTrait;
 
@@ -23,6 +23,20 @@ class GoogleAnalyticsCustomDimensionsAndMetricsTest extends WebTestBase {
    * @var array
    */
   public static $modules = ['google_analytics', 'token', 'node'];
+
+  /**
+   * Default theme.
+   *
+   * @var string
+   */
+  protected $defaultTheme = 'stark';
+
+  /**
+   * Admin user.
+   *
+   * @var \Drupal\user\Entity\User|bool
+   */
+  protected $adminUser;
 
   /**
    * {@inheritdoc}
@@ -44,8 +58,8 @@ class GoogleAnalyticsCustomDimensionsAndMetricsTest extends WebTestBase {
     ]);
 
     // User to set up google_analytics.
-    $this->admin_user = $this->drupalCreateUser($permissions);
-    $this->drupalLogin($this->admin_user);
+    $this->adminUser = $this->drupalCreateUser($permissions);
+    $this->drupalLogin($this->adminUser);
   }
 
   /**

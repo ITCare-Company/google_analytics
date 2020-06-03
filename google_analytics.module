@@ -18,8 +18,10 @@ use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Site\Settings;
 use Drupal\Core\Url;
 use Drupal\node\NodeInterface;
+use Drupal\user\Entity\User;
 use GuzzleHttp\Exception\RequestException;
 use Drupal\google_analytics\Component\Render\GoogleAnalyticsJavaScriptSnippet;
+use Drupal\Core\File\FileSystemInterface;
 
 /**
  * Advertise the supported google analytics api details.
@@ -136,7 +138,7 @@ function google_analytics_page_attachments(array &$page) {
         'error' => t('Error message'),
       ];
 
-      foreach (\Drupal::messenger()->all(NULL, FALSE) as $type => $messages) {
+      foreach (\Drupal::messenger()->all() as $type => $messages) {
         // Track only the selected message types.
         if (in_array($type, $message_types)) {
           foreach ($messages as $message) {
@@ -407,7 +409,10 @@ function google_analytics_entity_extra_field_info() {
  */
 function google_analytics_form_user_form_alter(&$form, FormStateInterface $form_state) {
   $config = \Drupal::config('google_analytics.settings');
-  $account = $form_state->getFormObject()->getEntity();
+  /** @var Drupal\user\ProfileForm $profileForm */
+  $profileForm = $form_state->getFormObject();
+  /** @var Drupal\user\Entity\User $account */
+  $account = $profileForm->getEntity();
 
   if ($account->hasPermission('opt-in or out of google analytics tracking') && ($visibility_user_account_mode = $config->get('visibility.user_account_mode')) != 0 && _google_analytics_visibility_roles($account)) {
     $account_data_google_analytics = \Drupal::service('user.data')->get('google_analytics', $account->id());
@@ -419,6 +424,7 @@ function google_analytics_form_user_form_alter(&$form, FormStateInterface $form_
       '#open' => TRUE,
     ];
 
+    $description = '';
     switch ($visibility_user_account_mode) {
       case 1:
         $description = t('Users are tracked by default, but you are able to opt out.');
@@ -445,7 +451,10 @@ function google_analytics_form_user_form_alter(&$form, FormStateInterface $form_
  * Submit callback for user profile form to save the Google Analytics setting.
  */
 function google_analytics_user_profile_form_submit($form, FormStateInterface $form_state) {
-  $account = $form_state->getFormObject()->getEntity();
+  /** @var Drupal\user\ProfileForm $profileForm */
+  $profileForm = $form_state->getFormObject();
+  /** @var Drupal\user\Entity\User $account */
+  $account = $profileForm->getEntity();
   if ($account->id() && $form_state->hasValue('user_account_users')) {
     \Drupal::service('user.data')->set('google_analytics', $account->id(), 'user_account_users', (int) $form_state->getValue('user_account_users'));
   }
@@ -505,6 +514,7 @@ function google_analytics_preprocess_item_list__search_results(&$variables) {
 function _google_analytics_cache($location, $synchronize = FALSE) {
   $path = 'public://google_analytics';
   $file_destination = $path . '/gtag.js';
+  $file_sytem =  \Drupal::service("file_system");
 
   if (!file_exists($file_destination) || $synchronize) {
     // Download the latest tracking code.
@@ -518,12 +528,12 @@ function _google_analytics_cache($location, $synchronize = FALSE) {
         $data_hash_local = Crypt::hashBase64(file_get_contents($file_destination));
         $data_hash_remote = Crypt::hashBase64($data);
         // Check that the files directory is writable.
-        if ($data_hash_local != $data_hash_remote && file_prepare_directory($path)) {
+        if ($data_hash_local != $data_hash_remote && $file_sytem->prepareDirectory($path)) {
           // Save updated tracking code file to disk.
-          file_unmanaged_save_data($data, $file_destination, FILE_EXISTS_REPLACE);
+          $file_sytem->saveData($data, $file_destination, FileSystemInterface::EXISTS_REPLACE);
           // Based on Drupal Core class AssetDumper.
           if (extension_loaded('zlib') && \Drupal::config('system.performance')->get('js.gzip')) {
-            file_unmanaged_save_data(gzencode($data, 9, FORCE_GZIP), $file_destination . '.gz', FILE_EXISTS_REPLACE);
+            $file_sytem->saveData(gzencode($data, 9, FORCE_GZIP), $file_destination . '.gz', FileSystemInterface::EXISTS_REPLACE);
           }
           \Drupal::logger('google_analytics')->info('Locally cached tracking code file has been updated.');
 
@@ -534,13 +544,13 @@ function _google_analytics_cache($location, $synchronize = FALSE) {
       }
       else {
         // Check that the files directory is writable.
-        if (file_prepare_directory($path, FILE_CREATE_DIRECTORY)) {
+        if ($file_sytem->prepareDirectory($path, FileSystemInterface::CREATE_DIRECTORY)) {
           // There is no need to flush JS here as core refreshes JS caches
           // automatically, if new files are added.
-          file_unmanaged_save_data($data, $file_destination, FILE_EXISTS_REPLACE);
+          $file_sytem->saveData($data, $file_destination, FileSystemInterface::EXISTS_REPLACE);
           // Based on Drupal Core class AssetDumper.
           if (extension_loaded('zlib') && \Drupal::config('system.performance')->get('js.gzip')) {
-            file_unmanaged_save_data(gzencode($data, 9, FORCE_GZIP), $file_destination . '.gz', FILE_EXISTS_REPLACE);
+            $file_sytem->saveData(gzencode($data, 9, FORCE_GZIP), $file_destination . '.gz', FileSystemInterface::EXISTS_REPLACE);
           }
           \Drupal::logger('google_analytics')->info('Locally cached tracking code file has been saved.');
 
@@ -564,9 +574,9 @@ function _google_analytics_cache($location, $synchronize = FALSE) {
  */
 function google_analytics_clear_js_cache() {
   $path = 'public://google_analytics';
-  if (file_prepare_directory($path)) {
-    file_scan_directory($path, '/.*/', ['callback' => 'file_unmanaged_delete']);
-    \Drupal::service('file_system')->rmdir($path);
+  $file_sytem = \Drupal::service("file_system");
+  if ($file_sytem->prepareDirectory($path)) {
+    $file_sytem->deleteRecursive($path);
 
     // Change query-strings on css/js files to enforce reload for all users.
     _drupal_flush_css_js();

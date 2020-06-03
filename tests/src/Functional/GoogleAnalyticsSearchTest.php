@@ -1,19 +1,21 @@
 <?php
 
-namespace Drupal\google_analytics\Tests;
+namespace Drupal\Tests\google_analytics\Functional;
 
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\simpletest\WebTestBase;
+use Drupal\Tests\Traits\Core\CronRunTrait;
+use Drupal\Tests\BrowserTestBase;
 
 /**
  * Test search functionality of Google Analytics module.
  *
  * @group Google Analytics
  */
-class GoogleAnalyticsSearchTest extends WebTestBase {
+class GoogleAnalyticsSearchTest extends BrowserTestBase {
 
   use StringTranslationTrait;
+  use CronRunTrait;
 
   /**
    * Modules to enable.
@@ -21,6 +23,20 @@ class GoogleAnalyticsSearchTest extends WebTestBase {
    * @var array
    */
   public static $modules = ['google_analytics', 'search', 'node'];
+
+  /**
+   * Admin user.
+   *
+   * @var \Drupal\user\Entity\User|bool
+   */
+  protected $adminUser;
+
+  /**
+   * Default theme.
+   *
+   * @var string
+   */
+  protected $defaultTheme = 'stark';
 
   /**
    * {@inheritdoc}
@@ -39,8 +55,8 @@ class GoogleAnalyticsSearchTest extends WebTestBase {
     ];
 
     // User to set up google_analytics.
-    $this->admin_user = $this->drupalCreateUser($permissions);
-    $this->drupalLogin($this->admin_user);
+    $this->adminUser = $this->drupalCreateUser($permissions);
+    $this->drupalLogin($this->adminUser);
   }
 
   /**
@@ -56,10 +72,10 @@ class GoogleAnalyticsSearchTest extends WebTestBase {
 
     // Check tracking code visibility.
     $this->drupalGet('');
-    $this->assertRaw($ua_code, '[testGoogleAnalyticsSearch]: Tracking code is displayed for authenticated users.');
+    $this->assertRaw($ua_code);
 
     $this->drupalGet('search/node');
-    $this->assertNoRaw('gtag("config", ' . Json::encode($ua_code) . ', {"groups":"default","page_path":"', '[testGoogleAnalyticsSearch]: Custom url not set.');
+    $this->assertNoRaw('gtag("config", ' . Json::encode($ua_code) . ', {"groups":"default","page_path":"');
 
     // Enable site search support.
     $this->config('google_analytics.settings')->set('track.site_search', 1)->save();
@@ -75,29 +91,29 @@ class GoogleAnalyticsSearchTest extends WebTestBase {
 
     // Fire a search, it's expected to get 0 results.
     $this->drupalPostForm('search/node', $search, $this->t('Search'));
-    $this->assertRaw('gtag("config", ' . Json::encode($ua_code) . ', {"groups":"default","page_path":(window.google_analytics_search_results) ?', '[testGoogleAnalyticsSearch]: Search results tracker is displayed.');
-    $this->assertRaw('window.google_analytics_search_results = 0;', '[testGoogleAnalyticsSearch]: Search yielded no results.');
+    $this->assertRaw('gtag("config", ' . Json::encode($ua_code) . ', {"groups":"default","page_path":(window.google_analytics_search_results) ?');
+    $this->assertRaw('window.google_analytics_search_results = 0;');
 
     // Save the node.
     $this->drupalPostForm('node/add/page', $edit, $this->t('Save'));
-    $this->assertText($this->t('@type @title has been created.', ['@type' => 'Basic page', '@title' => $edit['title[0][value]']]), 'Basic page created.');
+    $this->assertText($this->t('@type @title has been created.', ['@type' => 'Basic page', '@title' => $edit['title[0][value]']]));
 
     // Index the node or it cannot found.
     $this->cronRun();
 
     $this->drupalPostForm('search/node', $search, $this->t('Search'));
-    $this->assertRaw('gtag("config", ' . Json::encode($ua_code) . ', {"groups":"default","page_path":(window.google_analytics_search_results) ?', '[testGoogleAnalyticsSearch]: Search results tracker is displayed.');
-    $this->assertRaw('window.google_analytics_search_results = 1;', '[testGoogleAnalyticsSearch]: One search result found.');
+    $this->assertRaw('gtag("config", ' . Json::encode($ua_code) . ', {"groups":"default","page_path":(window.google_analytics_search_results) ?');
+    $this->assertRaw('window.google_analytics_search_results = 1;');
 
     $this->drupalPostForm('node/add/page', $edit, $this->t('Save'));
-    $this->assertText($this->t('@type @title has been created.', ['@type' => 'Basic page', '@title' => $edit['title[0][value]']]), 'Basic page created.');
+    $this->assertText($this->t('@type @title has been created.', ['@type' => 'Basic page', '@title' => $edit['title[0][value]']]));
 
     // Index the node or it cannot found.
     $this->cronRun();
 
     $this->drupalPostForm('search/node', $search, $this->t('Search'));
-    $this->assertRaw('gtag("config", ' . Json::encode($ua_code) . ', {"groups":"default","page_path":(window.google_analytics_search_results) ?', '[testGoogleAnalyticsSearch]: Search results tracker is displayed.');
-    $this->assertRaw('window.google_analytics_search_results = 2;', '[testGoogleAnalyticsSearch]: Two search results found.');
+    $this->assertRaw('gtag("config", ' . Json::encode($ua_code) . ', {"groups":"default","page_path":(window.google_analytics_search_results) ?');
+    $this->assertRaw('window.google_analytics_search_results = 2;');
   }
 
 }

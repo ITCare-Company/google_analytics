@@ -1,10 +1,10 @@
 <?php
 
-namespace Drupal\google_analytics\Tests;
+namespace Drupal\Tests\google_analytics\Functional;
 
 use Drupal\Component\Utility\Html;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
-use Drupal\simpletest\WebTestBase;
+use Drupal\Tests\BrowserTestBase;
 
 /**
  * Test php filter functionality of Google Analytics module.
@@ -13,7 +13,7 @@ use Drupal\simpletest\WebTestBase;
  *
  * @dependencies php
  */
-class GoogleAnalyticsPhpFilterTest extends WebTestBase {
+class GoogleAnalyticsPhpFilterTest extends BrowserTestBase {
 
   use StringTranslationTrait;
 
@@ -23,6 +23,27 @@ class GoogleAnalyticsPhpFilterTest extends WebTestBase {
    * @var array
    */
   public static $modules = ['google_analytics', 'php'];
+
+  /**
+   * Default theme.
+   *
+   * @var string
+   */
+  protected $defaultTheme = 'stark';
+
+  /**
+   * Admin user.
+   *
+   * @var \Drupal\user\Entity\User|bool
+   */
+  protected $adminUser;
+
+  /**
+   * Delegated admin user.
+   *
+   * @var \Drupal\user\Entity\User|bool
+   */
+  protected $delegatedAdminUser;
 
   /**
    * {@inheritdoc}
@@ -36,14 +57,14 @@ class GoogleAnalyticsPhpFilterTest extends WebTestBase {
       'administer google analytics',
       'use PHP for google analytics tracking visibility',
     ];
-    $this->admin_user = $this->drupalCreateUser($permissions_admin_user);
+    $this->adminUser = $this->drupalCreateUser($permissions_admin_user);
 
     // Administrator who cannot configure tracking visibility with PHP.
     $permissions_delegated_admin_user = [
       'access administration pages',
       'administer google analytics',
     ];
-    $this->delegated_admin_user = $this->drupalCreateUser($permissions_delegated_admin_user);
+    $this->delegatedAdminUser = $this->drupalCreateUser($permissions_delegated_admin_user);
   }
 
   /**
@@ -51,7 +72,7 @@ class GoogleAnalyticsPhpFilterTest extends WebTestBase {
    */
   public function testGoogleAnalyticsPhpFilter() {
     $ua_code = 'UA-123456-1';
-    $this->drupalLogin($this->admin_user);
+    $this->drupalLogin($this->adminUser);
 
     $edit = [];
     $edit['google_analytics_account'] = $ua_code;
@@ -66,25 +87,25 @@ class GoogleAnalyticsPhpFilterTest extends WebTestBase {
     // Check tracking code visibility.
     $this->config('google_analytics.settings')->set('visibility.request_path_pages', '<?php return TRUE; ?>')->save();
     $this->drupalGet('');
-    $this->assertRaw('https://www.googletagmanager.com/gtag/js?id=', '[testGoogleAnalyticsPhpFilter]: Tracking is displayed on frontpage page.');
+    $this->assertRaw('https://www.googletagmanager.com/gtag/js?id=');
     $this->drupalGet('admin');
-    $this->assertRaw('https://www.googletagmanager.com/gtag/js?id=', '[testGoogleAnalyticsPhpFilter]: Tracking is displayed on admin page.');
+    $this->assertRaw('https://www.googletagmanager.com/gtag/js?id=');
 
     $this->config('google_analytics.settings')->set('visibility.request_path_pages', '<?php return FALSE; ?>')->save();
     $this->drupalGet('');
-    $this->assertNoRaw('https://www.googletagmanager.com/gtag/js?id=', '[testGoogleAnalyticsPhpFilter]: Tracking is not displayed on frontpage page.');
+    $this->assertNoRaw('https://www.googletagmanager.com/gtag/js?id=');
 
     // Test administration form.
     $this->config('google_analytics.settings')->set('visibility.request_path_pages', '<?php return TRUE; ?>')->save();
     $this->drupalGet('admin/config/system/google-analytics');
-    $this->assertRaw($this->t('Pages on which this PHP code returns <code>TRUE</code> (experts only)'), '[testGoogleAnalyticsPhpFilter]: Permission to administer PHP for tracking visibility.');
-    $this->assertRaw(Html::escape('<?php return TRUE; ?>'), '[testGoogleAnalyticsPhpFilter]: PHP code snippted is displayed.');
+    $this->assertRaw($this->t('Pages on which this PHP code returns <code>TRUE</code> (experts only)'));
+    $this->assertRaw(Html::escape('<?php return TRUE; ?>'));
 
     // Login the delegated user and check if fields are visible.
-    $this->drupalLogin($this->delegated_admin_user);
+    $this->drupalLogin($this->delegatedAdminUser);
     $this->drupalGet('admin/config/system/google-analytics');
-    $this->assertNoRaw($this->t('Pages on which this PHP code returns <code>TRUE</code> (experts only)'), '[testGoogleAnalyticsPhpFilter]: No permission to administer PHP for tracking visibility.');
-    $this->assertNoRaw(Html::escape('<?php return TRUE; ?>'), '[testGoogleAnalyticsPhpFilter]: No permission to view PHP code snippted.');
+    $this->assertNoRaw($this->t('Pages on which this PHP code returns <code>TRUE</code> (experts only)'));
+    $this->assertNoRaw(Html::escape('<?php return TRUE; ?>'));
 
     // Set a different value and verify that this is still the same after the
     // post.

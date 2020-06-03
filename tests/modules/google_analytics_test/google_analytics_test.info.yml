@@ -2,4 +2,3 @@ name: 'Google Analytics test'
 type: module
 description: 'Support module for Google Analytics testing.'
 package: Testing
-core: 8.x

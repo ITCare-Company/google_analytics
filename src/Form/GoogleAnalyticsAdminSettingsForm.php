@@ -755,13 +755,13 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
   /**
    * Get an array of all forbidden tokens.
    *
-   * @param array $value
+   * @param array|string $value
    *   An array of token values.
    *
    * @return array
    *   A unique array of invalid tokens.
    */
-  protected static function getForbiddenTokens(array $value) {
+  protected static function getForbiddenTokens($value) {
     $invalid_tokens = [];
     $value_tokens = is_string($value) ? \Drupal::token()->scan($value) : $value;
 
@@ -771,8 +771,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
       }
     }
 
-    array_unique($invalid_tokens);
-    return $invalid_tokens;
+    return array_unique($invalid_tokens);
   }
 
   /**
@@ -904,7 +903,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
       $values[$name] = $value;
     }
 
-    return static::convertFormValueDataTypes($values);
+    return self::convertFormValueDataTypes($values);
   }
 
   /**
@@ -951,12 +950,13 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
     if (!in_array($name, $allowed_parameters)) {
       return t('Parameter name %name is unknown. Parameters are case sensitive. Please see <a href=":url">documentation</a> for supported parameters.', ['%name' => $name, ':url' => 'https://developers.google.com/analytics/devguides/collection/gtagjs/']);
     }
+    return NULL;
   }
 
   /**
    * Checks whether a candidate value is valid.
    *
-   * @param string $value
+   * @param string|bool $value
    *   The option value entered by the user.
    *
    * @return string|null
@@ -969,6 +969,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
     if (mb_strlen($value) > 255) {
       return t('The value of a parameter must be a string at most 255 characters long.');
     }
+    return NULL;
   }
 
   /**
@@ -1004,7 +1005,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
    * @param array $values
    *   Array of values.
    *
-   * @return string
+   * @return array
    *   Value with casted data type.
    */
   protected static function convertFormValueDataTypes(array $values) {
