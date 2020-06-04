@@ -18,7 +18,11 @@
     "drupal/core": "^8.8.6|^9.0"
   },
   "require-dev": {
-    "drupal/token": "~1.0",
-    "drupal/php": "~1.0"
+    "drupal/token": "^1.7"
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-8.x-2.x": "2.x-dev"
+    }
   }
 }

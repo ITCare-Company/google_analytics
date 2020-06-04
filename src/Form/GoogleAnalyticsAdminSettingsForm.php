@@ -190,7 +190,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
       $description = $this->t("Specify pages by using their paths. Enter one path per line. The '*' character is a wildcard. Example paths are %blog for the blog page and %blog-wildcard for every personal blog. %front is the front page.", ['%blog' => '/blog', '%blog-wildcard' => '/blog/*', '%front' => '<front>']);
 
       if ($this->moduleHandler->moduleExists('php') && $php_access) {
-        $options[] = $this->t('Pages on which this PHP code returns <code>TRUE</code> (experts only)');
+        $options[] = $this->t('Pages on which this PHP code returns <code>TRUE</code> (not supported in Drupal 9, experts only)');
         $title = $this->t('Pages or PHP code');
         $description .= ' ' . $this->t('If the PHP option is chosen, enter PHP code between %php. Note that executing incorrect PHP code can break your Drupal site.', ['%php' => '<?php ?>']);
       }
