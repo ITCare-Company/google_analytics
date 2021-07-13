@@ -78,21 +78,21 @@ class GoogleAnalyticsBasicTest extends BrowserTestBase {
     // Check if Configure link is available on 'Extend' page.
     // Requires 'administer modules' permission.
     $this->drupalGet('admin/modules');
-    $this->assertRaw('admin/config/system/google-analytics');
+    $this->assertRaw('admin/config/services/google-analytics');
 
     // Check if Configure link is available on 'Status Reports' page.
     // NOTE: Link is only shown without UA code configured.
     // Requires 'administer site configuration' permission.
     $this->drupalGet('admin/reports/status');
-    $this->assertRaw('admin/config/system/google-analytics');
+    $this->assertRaw('admin/config/services/google-analytics');
 
     // Check for setting page's presence.
-    $this->drupalGet('admin/config/system/google-analytics');
+    $this->drupalGet('admin/config/services/google-analytics');
     $this->assertRaw($this->t('Web Property ID'));
 
     // Check for account code validation.
     $edit['google_analytics_account'] = $this->randomMachineName(2);
-    $this->drupalPostForm('admin/config/system/google-analytics', $edit, $this->t('Save configuration'));
+    $this->drupalPostForm('admin/config/services/google-analytics', $edit, $this->t('Save configuration'));
     $this->assertRaw($this->t('A valid Google Analytics Web Property ID is case sensitive and formatted like UA-xxxxxxx-yy.'));
 
     // User should have access to code snippets.
@@ -105,7 +105,7 @@ class GoogleAnalyticsBasicTest extends BrowserTestBase {
 
     // Login as user without JS permissions.
     $this->drupalLogin($this->noSnippetUser);
-    $this->drupalGet('admin/config/system/google-analytics');
+    $this->drupalGet('admin/config/services/google-analytics');
 
     // User should *not* have access to snippets, but parameters field.
     $this->assertFieldByName('google_analytics_codesnippet_create');
@@ -121,7 +121,7 @@ class GoogleAnalyticsBasicTest extends BrowserTestBase {
    */
   public function testGoogleAnalyticsHelp() {
     // Requires help and block module and help block placement.
-    $this->drupalGet('admin/config/system/google-analytics');
+    $this->drupalGet('admin/config/services/google-analytics');
     $this->assertText('Google Analytics is a free (registration required) website traffic and marketing effectiveness service.');
 
     // Requires help.module.
@@ -155,7 +155,7 @@ class GoogleAnalyticsBasicTest extends BrowserTestBase {
     // Test whether tracking code is not included on pages to omit.
     $this->drupalGet('admin');
     $this->assertNoRaw($ua_code);
-    $this->drupalGet('admin/config/system/google-analytics');
+    $this->drupalGet('admin/config/services/google-analytics');
     // Checking for tracking URI here, as $ua_code is displayed in the form.
     $this->assertNoRaw('https://www.googletagmanager.com/gtag/js?id=');
 
@@ -163,7 +163,7 @@ class GoogleAnalyticsBasicTest extends BrowserTestBase {
     $this->config('google_analytics.settings')->set('visibility.request_path_mode', 1)->save();
     $this->drupalGet('admin');
     $this->assertRaw($ua_code);
-    $this->drupalGet('admin/config/system/google-analytics');
+    $this->drupalGet('admin/config/services/google-analytics');
     // Checking for tracking URI here, as $ua_code is displayed in the form.
     $this->assertRaw('https://www.googletagmanager.com/gtag/js?id=');
     $this->drupalGet('');

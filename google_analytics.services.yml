@@ -1,0 +1,7 @@
+services:
+  google_analytics.visibility:
+    class: Drupal\google_analytics\Helpers\VisiblityTracker
+    arguments: [ '@config.factory', '@path_alias.manager', '@path.matcher', '@user.data', '@path.current']
+  google_analytics.accounts:
+    class: Drupal\google_analytics\Helpers\GoogleAnalyticsAccounts
+    arguments: [ '@config.factory', '@private_key' ]

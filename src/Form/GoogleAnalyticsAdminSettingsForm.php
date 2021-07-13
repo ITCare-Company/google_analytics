@@ -8,6 +8,7 @@ use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\google_analytics\Helpers\GoogleAnalyticsAccounts;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\google_analytics\GoogleAnalitycsInterface;
 
@@ -31,19 +32,42 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
   protected $currentUser;
 
   /**
+   * The google analytics account manager.,
+   *
+   * @var \Drupal\google_analytics\Helpers\GoogleAnalyticsAccounts
+   */
+  private $gaAccounts;
+
+  /**
    * The constructor method.
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The config factory.
-   * @param \Drupal\Core\Session\AccountInterface $currentUser
+   * @param \Drupal\Core\Session\AccountInterface $current_user
    *   The current user.
-   * @param \Drupal\Core\Extension\ModuleHandlerInterface $moduleHandler
+   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
    *   The manages modules.
+   * @param \Drupal\google_analytics\Helpers\GoogleAnalyticsAccounts $google_analytics_accounts
+   *   The google analytics accounts manager.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, AccountInterface $currentUser, ModuleHandlerInterface $moduleHandler) {
+  public function __construct(ConfigFactoryInterface $config_factory, AccountInterface $current_user, ModuleHandlerInterface $module_handler, GoogleAnalyticsAccounts $google_analytics_accounts) {
     parent::__construct($config_factory);
-    $this->currentUser = $currentUser;
-    $this->moduleHandler = $moduleHandler;
+    $this->currentUser = $current_user;
+    $this->moduleHandler = $module_handler;
+    $this->gaAccounts = $google_analytics_accounts;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+    // Load the service required to construct this class.
+      $container->get('config.factory'),
+      $container->get('current_user'),
+      $container->get('module_handler'),
+      $container->get('google_analytics.accounts')
+    );
   }
 
   /**
@@ -60,7 +84,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
     return ['google_analytics.settings'];
   }
 
-  /**
+  /**google_analytics.accounts
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
@@ -68,19 +92,74 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
 
     $form['general'] = [
       '#type' => 'details',
-      '#title' => $this->t('General settings'),
+      '#title' => $this->t('General'),
       '#open' => TRUE,
     ];
 
+    $id_count = $form_state->get('id_count');
+    // If the id_count is null, we're loading for the first time, load in IDS.
+    if ($id_count === NULL) {
+      $accounts = $this->gaAccounts->getAccounts();
+      $id_count = empty($accounts) ? 1 : count($accounts);
+      $form_state->set('id_count', $id_count);
+    }
+
+    //$form['#tree'] = TRUE;
     $form['general']['google_analytics_account'] = [
-      '#default_value' => $config->get('account'),
-      '#description' => $this->t('This ID is unique to each site you want to track separately, and is in the form of UA-xxxxxxx-yy. To get a Web Property ID, <a href=":analytics">register your site with Google Analytics</a>, or if you already have registered your site, go to your Google Analytics Settings page to see the ID next to every site profile. <a href=":webpropertyid">Find more information in the documentation</a>.', [':analytics' => 'https://marketingplatform.google.com/about/analytics/', ':webpropertyid' => Url::fromUri('https://developers.google.com/analytics/resources/concepts/gaConceptsAccounts', ['fragment' => 'webProperty'])->toString()]),
-      '#maxlength' => 20,
-      '#placeholder' => 'UA-',
-      '#required' => TRUE,
-      '#size' => 20,
-      '#title' => $this->t('Web Property ID'),
-      '#type' => 'textfield',
+      '#type' => 'fieldset',
+      '#title' => $this->t('Google Account(s)'),
+      '#prefix' => '<div id="google_analytics_account-fieldset-wrapper">',
+      '#description' => $this->t('This ID is unique to each site you want to track separately, and is in the form of UA-xxxxx-yy, G-xxxxxxxx, AW-xxxxxxxxx, or DC-xxxxxxxx. To get a Web Property ID, <a href=":analytics">register your site with Google Analytics</a>, or if you already have registered your site, go to your Google Analytics Settings page to see the ID next to every site profile. <a href=":webpropertyid">Find more information in the documentation</a>.', [':analytics' => 'https://marketingplatform.google.com/about/analytics/', ':webpropertyid' => Url::fromUri('https://developers.google.com/analytics/resources/concepts/gaConceptsAccounts', ['fragment' => 'webProperty'])->toString()]),
+      '#suffix' => '</div>',
+    ];
+
+    for ($i = 0; $i < $id_count; $i++) {
+      // This makes sure removed fields don't reappear in the form.
+      if ($ids_to_remove = $form_state->get('remove_ids')) {
+        if (in_array($i, $ids_to_remove)) {
+          continue;
+        }
+      }
+
+      $form['general']['google_analytics_account']['gtag_ids']['#tree'] = TRUE;
+      $form['general']['google_analytics_account']['gtag_ids'][$i]['value'] = [
+        '#default_value' => $accounts[$i] ?? '',
+        '#maxlength' => 20,
+        '#placeholder' => 'UA-',
+        '#required' => TRUE,
+        '#size' => 20,
+        '#type' => 'textfield',
+        '#element_validate' => [[get_class($this), 'gtagElementValidate']],
+      ];
+
+      // If there is more than one id, add the remove button.
+      if ($id_count > 1) {
+        $form['general']['google_analytics_account']['gtag_ids'][$i]['remove'] = [
+          '#type' => 'submit',
+          '#name' => 'remove_gtag_ids_'.$i,
+          '#value' => $this->t('Remove'),
+          '#submit' => ['::removeCallback'],
+          '#limit_validation_errors' => [],
+          '#ajax' => [
+            'callback' => '::gtagFieldCallback',
+            'wrapper' => 'google_analytics_account-fieldset-wrapper',
+          ],
+        ];
+      }
+    }
+
+    $form['general']['google_analytics_account']['actions'] = [
+      '#type' => 'actions',
+    ];
+    $form['general']['google_analytics_account']['actions']['add_gtag_id'] = [
+      '#type' => 'submit',
+      '#value' => $this->t('Add another ID'),
+      '#name' => 'add_gtag_id',
+      '#submit' => ['::addOne'],
+      '#ajax' => [
+        'callback' => '::gtagFieldCallback',
+        'wrapper' => 'google_analytics_account-fieldset-wrapper',
+      ],
     ];
 
     $form['general']['google_analytics_premium'] = [
@@ -557,7 +636,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
     $form['advanced']['codesnippet']['google_analytics_codesnippet_create'] = [
       '#type' => 'textarea',
       '#title' => $this->t('Parameters'),
-      '#default_value' => $this->getNameValueString($config->get('codesnippet.create')),
+      '#default_value' => $this->getNameValueString($config->get('codesnippet.create') ?? []),
       '#rows' => 5,
       '#description' => $this->t('Enter one value per line, in the format name|value. Settings in this textarea will be added to <code>gtag("config", "UA-XXXX-Y", {"name":"value"});</code>. For more information, read <a href=":url">documentation</a> in the gtag.js reference.', [':url' => 'https://developers.google.com/analytics/devguides/collection/gtagjs/']),
       '#element_validate' => [[get_class($this), 'validateParameterValues']],
@@ -615,20 +694,12 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
     $form_state->setValue('google_analytics_custom_metric', $form_state->getValue(['google_analytics_custom_metric', 'indexes']));
 
     // Trim some text values.
-    $form_state->setValue('google_analytics_account', trim($form_state->getValue('google_analytics_account')));
     $form_state->setValue('google_analytics_visibility_request_path_pages', trim($form_state->getValue('google_analytics_visibility_request_path_pages')));
     $form_state->setValue('google_analytics_cross_domains', trim($form_state->getValue('google_analytics_cross_domains')));
     $form_state->setValue('google_analytics_codesnippet_before', trim($form_state->getValue('google_analytics_codesnippet_before')));
     $form_state->setValue('google_analytics_codesnippet_after', trim($form_state->getValue('google_analytics_codesnippet_after')));
-    $form_state->setValue('google_analytics_visibility_user_role_roles', array_filter($form_state->getValue('google_analytics_visibility_user_role_roles')));
-    $form_state->setValue('google_analytics_trackmessages', array_filter($form_state->getValue('google_analytics_trackmessages')));
-
-    // Replace all type of dashes (n-dash, m-dash, minus) with normal dashes.
-    $form_state->setValue('google_analytics_account', str_replace(['–', '—', '−'], '-', $form_state->getValue('google_analytics_account')));
-
-    if (!preg_match('/^UA-\d+-\d+$/', $form_state->getValue('google_analytics_account'))) {
-      $form_state->setErrorByName('google_analytics_account', $this->t('A valid Google Analytics Web Property ID is case sensitive and formatted like UA-xxxxxxx-yy.'));
-    }
+    $form_state->setValue('google_analytics_visibility_user_role_roles', array_filter($form_state->getValue('google_analytics_visibility_user_role_roles') ?? []));
+    $form_state->setValue('google_analytics_trackmessages', array_filter($form_state->getValue('google_analytics_trackmessages') ?? []));
 
     // If multiple top-level domains has been selected, a domain names list is
     // required.
@@ -682,8 +753,17 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $config = $this->config('google_analytics.settings');
+
+    // Convert gtag ID values to accounts string
+    $gtag_values = $form_state->getValue('gtag_ids');
+    $accounts_array = [];
+    foreach($gtag_values as $gtag) {
+      $accounts_array[] = $gtag['value'];
+    }
+    $accounts = implode(',', $accounts_array);
+
     $config
-      ->set('account', $form_state->getValue('google_analytics_account'))
+      ->set('account', $accounts)
       ->set('premium', $form_state->getValue('google_analytics_premium'))
       ->set('cross_domains', $form_state->getValue('google_analytics_cross_domains'))
       ->set('codesnippet.create', $form_state->getValue('google_analytics_codesnippet_create'))
@@ -719,6 +799,16 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
     }
 
     parent::submitForm($form, $form_state);
+  }
+
+  public static function gtagElementValidate(&$element, FormStateInterface $form_state) {
+    // Get and Validate Analytics Account IDs
+    $gtag_id = isset($element['#value']) ? $element['#value'] : $element['#default_value'];
+    $gtag_id = trim($gtag_id);
+    $gtag_id = str_replace(['–', '—', '−'], '-', $gtag_id);
+    if (!preg_match(GoogleAnalitycsInterface::GOOGLE_ANALYTICS_GTAG_MATCH, $gtag_id)) {
+      $form_state->setError($element, t('A valid Google Analytics Web Property ID is case sensitive and formatted like UA-xxxxx-yy, G-xxxxxxxx, AW-xxxxxxxxx, or DC-xxxxxxxx.'));
+    }
   }
 
   /**
@@ -986,7 +1076,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
    *    - Values are separated by a carriage return.
    *    - Each value is in the format "name|value" or "value".
    */
-  protected function getNameValueString(array $values) {
+  protected function getNameValueString(array $values = []) {
     $lines = [];
     foreach ($values as $name => $value) {
       // Convert data types.
@@ -1040,15 +1130,45 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
   }
 
   /**
-   * {@inheritdoc}
+   * Callback for both ajax-enabled buttons.
+   *
+   * Selects and returns the fieldset with the names in it.
    */
-  public static function create(ContainerInterface $container) {
-    return new static(
-      // Load the service required to construct this class.
-      $container->get('config.factory'),
-      $container->get('current_user'),
-      $container->get('module_handler')
-    );
+  public function gtagFieldCallback(array &$form, FormStateInterface $form_state) {
+    return $form['general']['google_analytics_account'];
+  }
+
+  /**
+   * Submit handler for the "add-one-more" button.
+   *
+   * Increments the max counter and causes a rebuild.
+   */
+  public function addOne(array &$form, FormStateInterface $form_state) {
+    $id_field = $form_state->get('id_count');
+    $add_button = $id_field + 1;
+    $form_state->set('id_count', $add_button);
+    // Since our buildForm() method relies on the value of 'num_names' to
+    // generate 'gtag_id' form elements, we have to tell the form to rebuild. If we
+    // don't do this, the form builder will not call buildForm().
+    $form_state->setRebuild();
+  }
+
+  /**
+   * Submit handler for the "remove one" button.
+   *
+   * Decrements the max counter and causes a form rebuild.
+   */
+  public function removeCallback(array &$form, FormStateInterface $form_state) {
+    $removed_trigger = $form_state->getTriggeringElement();
+    $gtag_id = substr($removed_trigger['#name'], strlen('remove_gtags_ids'));
+    $removed_ids = $form_state->get('remove_ids') ?? [];
+    $removed_ids[] = $gtag_id;
+    $form_state->set('remove_ids', $removed_ids);
+
+    // Since our buildForm() method relies on the value of 'num_names' to
+    // generate 'name' form elements, we have to tell the form to rebuild. If we
+    // don't do this, the form builder will not call buildForm().
+    $form_state->setRebuild();
   }
 
 }

@@ -1,0 +1,88 @@
+<?php
+
+
+namespace Drupal\google_analytics\Helpers;
+
+
+use Drupal\Component\Utility\Crypt;
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\PrivateKey;
+use Drupal\Core\Site\Settings;
+use Drupal\google_analytics\GoogleAnalitycsInterface;
+
+class GoogleAnalyticsAccounts implements GoogleAnalitycsInterface {
+
+  /**
+   * @var string
+   */
+  protected $privateKey;
+
+  /**
+   * @var \Drupal\Core\Config\ImmutableConfig
+   */
+  private $config;
+
+  /**
+   * @var array
+   */
+  private $accounts;
+
+  /**
+   * Constructor.
+   *
+   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
+   *   The config factory service.
+   * @param \Drupal\Core\PrivateKey $private_key
+   *   The private key service.
+   */
+  public function __construct(ConfigFactoryInterface $config_factory, PrivateKey $private_key) {
+    $this->config = $config_factory->get('google_analytics.settings');
+    $accounts = $this->config->get('account');
+
+    // Create the accounts array from either a single gtag id or multiple ones.
+    if (strpos($accounts, ',') === FALSE) {
+      $this->accounts[] = $accounts;
+    }
+    else {
+      $this->accounts = explode(',', $accounts);
+    }
+
+    $this->privateKey = $private_key->get();
+  }
+
+  /**
+   * Generate user id hash to implement USER_ID.
+   *
+   * The USER_ID value should be a unique, persistent, and non-personally
+   * identifiable string identifier that represents a user or signed-in
+   * account across devices.
+   *
+   * @param int $uid
+   *   User id.
+   *
+   * @return string
+   *   User id hash.
+   */
+  public function getUserIdHash($uid) {
+    return Crypt::hmacBase64($uid, $this->privateKey . Settings::getHashSalt());
+  }
+
+  public function getDefaultMeasurementId() {
+    // The top UA- or G- Account is the default measurement ID.
+    foreach ($this->accounts as $account) {
+      if (preg_match(self::GOOGLE_ANALYTICS_TRACKING_MATCH, $account)) {
+        return $account;
+      }
+    }
+  }
+
+  public function getAdditionalAccounts() {
+    return array_filter($this->accounts, function($v) {
+      return $v !== $this->getDefaultMeasurementId();
+    });
+  }
+
+  public function getAccounts() {
+    return $this->accounts;
+  }
+}
