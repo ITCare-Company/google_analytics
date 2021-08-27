@@ -58,6 +58,9 @@ function google_analytics_page_attachments(array &$page) {
   $account = \Drupal::currentUser();
   $config = \Drupal::config('google_analytics.settings');
   $request = \Drupal::request();
+
+  //$ga_javascript = \Drupal::service('google_analytics.javascript');
+
   /** @var \Drupal\google_analytics\Helpers\VisiblityTracker $visibilityTracker */
   $visibilityTracker = \Drupal::service('google_analytics.visibility');
   /** @var \Drupal\google_analytics\Helpers\GoogleAnalyticsAccounts $ga_accounts */
@@ -291,6 +294,7 @@ function google_analytics_page_attachments(array &$page) {
       $arguments['user_id'] = $ga_accounts->getUserIdHash($account->id());
     }
 
+    // Eliminate for GA 4.x
     if ($config->get('privacy.anonymizeip')) {
       $arguments['anonymize_ip'] = TRUE;
     }
@@ -348,27 +352,14 @@ function google_analytics_page_attachments(array &$page) {
     }
 
     // Prepend tracking library directly before script code.
-    if ($debug) {
-      // Debug script has highest priority to load.
-      // @FIXME: Cannot find the debug URL!???
-      $library = 'https://www.googletagmanager.com/gtag/js?id=' . $default_id;
-    }
-    elseif ($config->get('cache') && _google_analytics_cache('https://www.googletagmanager.com/gtag/js')) {
-      // Should a local cached copy of gtag.js be used?
-      $query_string = '?' . (\Drupal::state()->get('system.css_js_query_string') ?: '0');
-      $library = file_url_transform_relative(file_create_url('public://google_analytics/gtag.js')) . $query_string;
-    }
-    else {
-      // Fallback to default.
-      $library = 'https://www.googletagmanager.com/gtag/js?id=' . $default_id;
-    }
+    $javascript_service = \Drupal::service('google_analytics.javascript_cache');
 
     $page['#attached']['html_head'][] = [
       [
         '#tag' => 'script',
         '#attributes' => [
           'async' => TRUE,
-          'src' => $library,
+          'src' => $javascript_service->fetchGoogleAnalyticsJavascript($default_id),
         ],
       ],
       'google_analytics_tracking_file',
@@ -461,10 +452,17 @@ function google_analytics_user_profile_form_submit($form, FormStateInterface $fo
 function google_analytics_cron() {
   $config = \Drupal::config('google_analytics.settings');
   $request_time = \Drupal::time()->getRequestTime();
+  $javascript_service = \Drupal::service('google_analytics.javascript_cache');
+  $ga_accounts = \Drupal::service('google_analytics.accounts');
+
+  // Return prematurely if no default measurement ID was found.
+  if (empty($ga_accounts->getDefaultMeasurementId())) {
+    return;
+  }
 
   // Regenerate the tracking code file every day.
   if ($request_time - \Drupal::state()->get('google_analytics.last_cache') >= 86400 && $config->get('cache')) {
-    _google_analytics_cache('https://www.googletagmanager.com/gtag/js', TRUE);
+    $javascript_service->fetchGoogleAnalyticsJavascript($ga_accounts->getDefaultMeasurementId(), TRUE);
     \Drupal::state()->set('google_analytics.last_cache', $request_time);
   }
 }
@@ -497,88 +495,4 @@ function google_analytics_preprocess_item_list__search_results(&$variables) {
   }
 }
 
-/**
- * Download/Synchronize/Cache tracking code file locally.
- *
- * @param string $location
- *   The full URL to the external javascript file.
- * @param bool $synchronize
- *   Synchronize to local cache if remote file has changed.
- *
- * @return mixed
- *   The path to the local javascript file on success, boolean FALSE on failure.
- */
-function _google_analytics_cache($location, $synchronize = FALSE) {
-  $path = 'public://google_analytics';
-
-  $file_destination = $path . '/gtag.js';
-  $filesystem = \Drupal::service('file_system');
-
-  if (!file_exists($file_destination) || $synchronize) {
-    // Download the latest tracking code.
-    try {
-      $data = (string) \Drupal::httpClient()
-        ->get($location)
-        ->getBody();
-
-      if (file_exists($file_destination)) {
-        // Synchronize tracking code and and replace local file if outdated.
-        $data_hash_local = Crypt::hashBase64(file_get_contents($file_destination));
-        $data_hash_remote = Crypt::hashBase64($data);
-        // Check that the files directory is writable.
-        if ($data_hash_local != $data_hash_remote && $filesystem->prepareDirectory($path)) {
-          // Save updated tracking code file to disk.
-          $filesystem->saveData($data, $file_destination, FileSystemInterface::EXISTS_REPLACE);
-          // Based on Drupal Core class AssetDumper.
-          if (extension_loaded('zlib') && \Drupal::config('system.performance')->get('js.gzip')) {
-            $filesystem->saveData(gzencode($data, 9, FORCE_GZIP), $file_destination . '.gz', FileSystemInterface::EXISTS_REPLACE);
-          }
-          \Drupal::logger('google_analytics')->info('Locally cached tracking code file has been updated.');
-
-          // Change query-strings on css/js files to enforce reload for all
-          // users.
-          _drupal_flush_css_js();
-        }
-      }
-      else {
-        // Check that the files directory is writable.
-        if ($filesystem->prepareDirectory($path, FileSystemInterface::CREATE_DIRECTORY)) {
-          // There is no need to flush JS here as core refreshes JS caches
-          // automatically, if new files are added.
-          $filesystem->saveData($data, $file_destination, FileSystemInterface::EXISTS_REPLACE);
-          // Based on Drupal Core class AssetDumper.
-          if (extension_loaded('zlib') && \Drupal::config('system.performance')->get('js.gzip')) {
-            $filesystem->saveData(gzencode($data, 9, FORCE_GZIP), $file_destination . '.gz', FileSystemInterface::EXISTS_REPLACE);
-          }
-          \Drupal::logger('google_analytics')->info('Locally cached tracking code file has been saved.');
-
-          // Return the local JS file path.
-          return file_url_transform_relative(file_create_url($file_destination));
-        }
-      }
-    }
-    catch (RequestException $exception) {
-      watchdog_exception('google_analytics', $exception);
-    }
-  }
-  else {
-    // Return the local JS file path.
-    return file_url_transform_relative(file_create_url($file_destination));
-  }
-}
-
-/**
- * Delete cached files and directory.
- */
-function google_analytics_clear_js_cache() {
-  $path = 'public://google_analytics';
-  if (is_dir($path)) {
-    \Drupal::service('file_system')->deleteRecursive($path);
-
-    // Change query-strings on css/js files to enforce reload for all users.
-    _drupal_flush_css_js();
-
-    \Drupal::logger('google_analytics')->info('Local cache has been purged.');
-  }
-}
 

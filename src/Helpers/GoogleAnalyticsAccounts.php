@@ -8,9 +8,9 @@ use Drupal\Component\Utility\Crypt;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\PrivateKey;
 use Drupal\Core\Site\Settings;
-use Drupal\google_analytics\GoogleAnalitycsInterface;
+use Drupal\google_analytics\GoogleAnalyticsInterface;
 
-class GoogleAnalyticsAccounts implements GoogleAnalitycsInterface {
+class GoogleAnalyticsAccounts implements GoogleAnalyticsInterface {
 
   /**
    * @var string

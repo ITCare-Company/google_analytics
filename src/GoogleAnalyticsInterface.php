@@ -5,7 +5,7 @@ namespace Drupal\google_analytics;
 /**
  * Provides an interface.
  */
-interface GoogleAnalitycsInterface {
+interface GoogleAnalyticsInterface {
 
   /**
    * Define the default file extension list that should be tracked as download.

@@ -9,8 +9,9 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\google_analytics\Helpers\GoogleAnalyticsAccounts;
+use Drupal\google_analytics\JavascriptLocalCache;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\google_analytics\GoogleAnalitycsInterface;
+use Drupal\google_analytics\GoogleAnalyticsInterface;
 
 /**
  * Configure Google_Analytics settings for this site.
@@ -39,6 +40,13 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
   private $gaAccounts;
 
   /**
+   * The google analytics local javascript cache manager.
+   *
+   * @var \Drupal\google_analytics\JavascriptLocalCache
+   */
+  protected $gaJavascript;
+
+  /**
    * The constructor method.
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
@@ -50,11 +58,12 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
    * @param \Drupal\google_analytics\Helpers\GoogleAnalyticsAccounts $google_analytics_accounts
    *   The google analytics accounts manager.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, AccountInterface $current_user, ModuleHandlerInterface $module_handler, GoogleAnalyticsAccounts $google_analytics_accounts) {
+  public function __construct(ConfigFactoryInterface $config_factory, AccountInterface $current_user, ModuleHandlerInterface $module_handler, GoogleAnalyticsAccounts $google_analytics_accounts, JavascriptLocalCache $google_analytics_javascript) {
     parent::__construct($config_factory);
     $this->currentUser = $current_user;
     $this->moduleHandler = $module_handler;
     $this->gaAccounts = $google_analytics_accounts;
+    $this->gaJavascript = $google_analytics_javascript;
   }
 
   /**
@@ -66,7 +75,8 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
       $container->get('config.factory'),
       $container->get('current_user'),
       $container->get('module_handler'),
-      $container->get('google_analytics.accounts')
+      $container->get('google_analytics.accounts'),
+      $container->get('google_analytics.javascript_cache')
     );
   }
 
@@ -370,7 +380,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
       '#title_display' => 'invisible',
       '#type' => 'textfield',
       '#default_value' => $config->get('track.files_extensions'),
-      '#description' => $this->t('A file extension list separated by the | character that will be tracked as download when clicked. Regular expressions are supported. For example: @extensions', ['@extensions' => GoogleAnalitycsInterface::GOOGLE_ANALYTICS_TRACKFILES_EXTENSIONS]),
+      '#description' => $this->t('A file extension list separated by the | character that will be tracked as download when clicked. Regular expressions are supported. For example: @extensions', ['@extensions' => GoogleAnalyticsInterface::GOOGLE_ANALYTICS_TRACKFILES_EXTENSIONS]),
       '#maxlength' => 500,
       '#states' => [
         'enabled' => [
@@ -730,7 +740,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
     }
     // Clear obsolete local cache if cache has been disabled.
     if ($form_state->isValueEmpty('google_analytics_cache') && $form['advanced']['google_analytics_cache']['#default_value']) {
-      google_analytics_clear_js_cache();
+      $this->gaJavascript->clearGoogleAnalyticsJsCache();
     }
 
     // This is for the Newbie's who cannot read a text area description.
@@ -806,7 +816,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
     $gtag_id = isset($element['#value']) ? $element['#value'] : $element['#default_value'];
     $gtag_id = trim($gtag_id);
     $gtag_id = str_replace(['–', '—', '−'], '-', $gtag_id);
-    if (!preg_match(GoogleAnalitycsInterface::GOOGLE_ANALYTICS_GTAG_MATCH, $gtag_id)) {
+    if (!preg_match(GoogleAnalyticsInterface::GOOGLE_ANALYTICS_GTAG_MATCH, $gtag_id)) {
       $form_state->setError($element, t('A valid Google Analytics Web Property ID is case sensitive and formatted like UA-xxxxx-yy, G-xxxxxxxx, AW-xxxxxxxxx, or DC-xxxxxxxx.'));
     }
   }

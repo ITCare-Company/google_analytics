@@ -5,3 +5,6 @@ services:
   google_analytics.accounts:
     class: Drupal\google_analytics\Helpers\GoogleAnalyticsAccounts
     arguments: [ '@config.factory', '@private_key' ]
+  google_analytics.javascript_cache:
+    class: Drupal\google_analytics\JavascriptLocalCache
+    arguments: [ '@http_client', '@file_system', '@config.factory', '@logger.factory', '@state']
