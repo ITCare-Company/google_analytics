@@ -15,6 +15,12 @@ use Drupal\Core\Cache\Cache;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Url;
+use Drupal\google_analytics\Event\BuildGaJavascriptEvent;
+use Drupal\google_analytics\Event\GoogleAnalyticsConfigEvent;
+use Drupal\google_analytics\Event\GoogleAnalyticsEventsEvent;
+use Drupal\google_analytics\Event\PagePathEvent;
+use Drupal\google_analytics\GaJavascriptObject;
+use Drupal\google_analytics\GoogleAnalyticsEvents;
 use Drupal\node\NodeInterface;
 use GuzzleHttp\Exception\RequestException;
 use Drupal\google_analytics\Component\Render\GoogleAnalyticsJavaScriptSnippet;
@@ -59,8 +65,6 @@ function google_analytics_page_attachments(array &$page) {
   $config = \Drupal::config('google_analytics.settings');
   $request = \Drupal::request();
 
-  //$ga_javascript = \Drupal::service('google_analytics.javascript');
-
   /** @var \Drupal\google_analytics\Helpers\VisiblityTracker $visibilityTracker */
   $visibilityTracker = \Drupal::service('google_analytics.visibility');
   /** @var \Drupal\google_analytics\Helpers\GoogleAnalyticsAccounts $ga_accounts */
@@ -93,6 +97,9 @@ function google_analytics_page_attachments(array &$page) {
     $debug = $config->get('debug');
     $url_custom = '';
 
+    // Instantiate our event.
+    $javascript = new GaJavascriptObject($default_id);
+
     // Add link tracking.
     $link_settings = ['account' => $default_id];
     if ($track_outbound = $config->get('track.outbound')) {
@@ -116,7 +123,6 @@ function google_analytics_page_attachments(array &$page) {
     }
     if ($track_url_fragments = $config->get('track.urlfragments')) {
       $link_settings['trackUrlFragments'] = $track_url_fragments;
-      $url_custom = 'location.pathname + location.search + location.hash';
     }
 
     if (!empty($link_settings)) {
@@ -135,122 +141,12 @@ function google_analytics_page_attachments(array &$page) {
       }
     }
 
-    // Add messages tracking.
-    $message_events = '';
-    if ($message_types = $config->get('track.messages')) {
-      $message_types = array_values(array_filter($message_types));
-      $status_heading = [
-        'status' => t('Status message'),
-        'warning' => t('Warning message'),
-        'error' => t('Error message'),
-      ];
-
-      foreach (\Drupal::messenger()->all() as $type => $messages) {
-        // Track only the selected message types.
-        if (in_array($type, $message_types)) {
-          foreach ($messages as $message) {
-            // @todo: Track as exceptions?
-            $event = [];
-            $event['event_category'] = t('Messages');
-            $event['event_label'] = strip_tags((string) $message);
-            $message_events .= 'gtag("event", ' . Json::encode($status_heading[$type]) . ', ' . Json::encode($event) . ');';
-          }
-        }
-      }
+    if ($config->get('track.adsense')) {
+      // Custom tracking. Prepend before all other JavaScript.
+      // @TODO: https://support.google.com/adsense/answer/98142
+      // sounds like it could be appended to $script.
+      $script = $javascript->getAdsenseScript();
     }
-
-    // Site search tracking support.
-    if (\Drupal::moduleHandler()->moduleExists('search') && $config->get('track.site_search') && (strpos(\Drupal::routeMatch()->getRouteName(), 'search.view') === 0) && $keys = ($request->query->has('keys') ? trim($request->get('keys')) : '')) {
-      // hook_item_list__search_results() is not executed if search result is
-      // empty. Make sure the counter is set to 0 if there are no results.
-      $entity_id = \Drupal::routeMatch()->getParameter('entity')->id();
-      $url_custom = '(window.google_analytics_search_results) ? ' . Json::encode(Url::fromRoute('search.view_' . $entity_id, [], ['query' => ['search' => $keys]])->toString()) . ' : ' . Json::encode(Url::fromRoute('search.view_' . $entity_id, ['query' => ['search' => 'no-results:' . $keys, 'cat' => 'no-results']])->toString());
-    }
-
-    // If this node is a translation of another node, pass the original
-    // node instead.
-    if (\Drupal::moduleHandler()->moduleExists('content_translation') && $config->get('translation_set')) {
-      // Check if we have a node object, it has translation enabled, and its
-      // language code does not match its source language code.
-      if ($request->attributes->has('node')) {
-        $node = $request->attributes->get('node');
-        if ($node instanceof NodeInterface && \Drupal::service('entity.repository')->getTranslationFromContext($node) !== $node->getUntranslated()) {
-          $url_custom = Json::encode(Url::fromRoute('entity.node.canonical', ['node' => $node->id()], ['language' => $node->getUntranslated()->language()])->toString());
-        }
-      }
-    }
-
-    // Track access denied (403) and file not found (404) pages.
-    if ($status == '403') {
-      // See https://www.google.com/support/analytics/bin/answer.py?answer=86927
-      $url_custom = '"' . $base_path . '403.html?page=" + document.location.pathname + document.location.search + "&from=" + document.referrer';
-    }
-    elseif ($status == '404') {
-      $url_custom = '"' . $base_path . '404.html?page=" + document.location.pathname + document.location.search + "&from=" + document.referrer';
-    }
-
-    // #2693595: User has entered an invalid login and clicked on forgot
-    // password link. This link contains the username or email address and may
-    // get send to Google if we do not override it. Override only if 'name'
-    // query param exists. Last custom url condition, this need to win.
-    //
-    // URLs to protect are:
-    // - user/password?name=username
-    // - user/password?name=foo@example.com
-    if (\Drupal::routeMatch()->getRouteName() == 'user.pass' && $request->query->has('name')) {
-      $url_custom = '"' . $base_path . 'user/password"';
-    }
-
-    // Add custom dimensions and metrics.
-    $custom_map = [];
-    $custom_vars = [];
-    foreach (['dimension', 'metric'] as $google_analytics_custom_type) {
-      $google_analytics_custom_vars = $config->get('custom.' . $google_analytics_custom_type);
-      // Are there dimensions or metrics configured?
-      if (!empty($google_analytics_custom_vars)) {
-        // Add all the configured variables to the content.
-        foreach ($google_analytics_custom_vars as $google_analytics_custom_var) {
-          // Replace tokens in values.
-          $types = [];
-          if ($request->attributes->has('node')) {
-            $node = $request->attributes->get('node');
-            if ($node instanceof NodeInterface) {
-              $types += ['node' => $node];
-            }
-          }
-          $google_analytics_custom_var['value'] = \Drupal::token()->replace($google_analytics_custom_var['value'], $types, ['clear' => TRUE]);
-
-          // Suppress empty values.
-          if (!mb_strlen(trim($google_analytics_custom_var['name'])) || !mb_strlen(trim($google_analytics_custom_var['value']))) {
-            continue;
-          }
-
-          // Per documentation the max length of a dimension is 150 bytes.
-          // A metric has no length limitation. It's not documented if this
-          // limit means 150 bytes after url encoding or before.
-          // See https://developers.google.com/analytics/devguides/collection/analyticsjs/field-reference#customs
-          if ($google_analytics_custom_type == 'dimension' && mb_strlen($google_analytics_custom_var['value']) > 150) {
-            $google_analytics_custom_var['value'] = substr($google_analytics_custom_var['value'], 0, 150);
-          }
-
-          // Cast metric values for json_encode to data type numeric.
-          if ($google_analytics_custom_type == 'metric') {
-            settype($google_analytics_custom_var['value'], 'float');
-          };
-
-          // Build the arrays of values.
-          $custom_map['custom_map'][$google_analytics_custom_type . $google_analytics_custom_var['index']] = $google_analytics_custom_var['name'];
-          $custom_vars[$google_analytics_custom_var['name']] = $google_analytics_custom_var['value'];
-        }
-      }
-    }
-
-    $custom_var = '';
-    if (!empty($custom_map)) {
-      // Add custom variables to tracker.
-      $custom_var .= 'gtag("config", ' . Json::encode($default_id) . ', ' . Json::encode($custom_map) . ');';
-      $custom_var .= 'gtag("event", "custom", ' . Json::encode($custom_vars) . ');';
-    };
 
     // Build tracker code.
     $script = 'window.dataLayer = window.dataLayer || [];';
@@ -259,91 +155,34 @@ function google_analytics_page_attachments(array &$page) {
     $script .= 'gtag("set", "developer_id.dMDhkMT", true);';
 
     // Add any custom code snippets if specified.
-    $codesnippet_parameters = $config->get('codesnippet.create') ?? [];
     $codesnippet_before = $config->get('codesnippet.before');
     $codesnippet_after = $config->get('codesnippet.after');
-
-    // Build the arguments fields list.
-    // https://developers.google.com/analytics/devguides/collection/gtagjs/sending-data
-    $arguments = ['groups' => 'default'];
-    $arguments = array_merge($arguments, $codesnippet_parameters);
-
-    // Domain tracking type.
-    global $cookie_domain;
-    $domain_mode = $config->get('domain_mode');
-    $googleanalytics_adsense_script = '';
-
-    // Per RFC 2109, cookie domains must contain at least one dot other than the
-    // first. For hosts such as 'localhost' or IP Addresses we don't set a
-    // cookie domain.
-    if ($domain_mode == 1 && count(explode('.', $cookie_domain)) > 2 && !is_numeric(str_replace('.', '', $cookie_domain))) {
-      $arguments = array_merge($arguments, ['cookie_domain' => $cookie_domain]);
-      $googleanalytics_adsense_script .= 'window.google_analytics_domain_name = ' . Json::encode($cookie_domain) . ';';
-    }
-    elseif ($domain_mode == 2) {
-      // Cross Domain tracking
-      // https://developers.google.com/analytics/devguides/collection/gtagjs/cross-domain
-      $arguments['linker'] = [
-        'domains' => $link_settings['trackCrossDomains'],
-      ];
-      $googleanalytics_adsense_script .= 'window.google_analytics_domain_name = "none";';
-    }
-
-    // Track logged in users across all devices.
-    if ($config->get('track.userid') && $account->isAuthenticated()) {
-      $arguments['user_id'] = $ga_accounts->getUserIdHash($account->id());
-    }
-
-    // Eliminate for GA 4.x
-    if ($config->get('privacy.anonymizeip')) {
-      $arguments['anonymize_ip'] = TRUE;
-    }
-
-    if (!empty($url_custom)) {
-      $arguments['page_path'] = 'PLACEHOLDER_URL_CUSTOM';
-    }
-
-    // Add enhanced link attribution after 'create', but before 'pageview' send.
-    // @see https://developers.google.com/analytics/devguides/collection/gtagjs/enhanced-link-attribution
-    if ($config->get('track.linkid')) {
-      $arguments['link_attribution'] = TRUE;
-    }
-
-    // Disabling display features.
-    // @see https://developers.google.com/analytics/devguides/collection/gtagjs/display-features
-    if (!$config->get('track.displayfeatures')) {
-      $arguments['allow_ad_personalization_signals'] = FALSE;
-    }
-
-    // Convert array to JSON format.
-    $arguments_json = Json::encode($arguments);
-    // Json::encode() cannot convert every data type properly.
-    $arguments_json = str_replace('"PLACEHOLDER_URL_CUSTOM"', $url_custom, $arguments_json);
 
     // Create a tracker.
     if (!empty($codesnippet_before)) {
       $script .= $codesnippet_before;
     }
-    $script .= 'gtag("config", ' . Json::encode($default_id) . ', ' . $arguments_json . ');';
+    $ga_config = new GoogleAnalyticsConfigEvent($javascript);
 
-    // Prepare Adsense tracking.
-    $googleanalytics_adsense_script .= 'window.google_analytics_uacct = ' . Json::encode($default_id) . ';';
+    // Get the event_dispatcher service and dispatch the event.
+    $event_dispatcher = \Drupal::service('event_dispatcher');
+    $event_dispatcher->dispatch($ga_config, GoogleAnalyticsEvents::ADD_CONFIG);
 
-    if (!empty($custom_var)) {
-      $script .= $custom_var;
-    }
-    if (!empty($message_events)) {
-      $script .= $message_events;
+    $script .= 'gtag("config", ' . Json::encode($default_id) . ', ' . Json::encode($ga_config->getConfig()) . ');';
+
+    $ga_events = new GoogleAnalyticsEventsEvent($javascript);
+
+    // Get the event_dispatcher service and dispatch the event.
+    $event_dispatcher = \Drupal::service('event_dispatcher');
+    $event_dispatcher->dispatch($ga_events, GoogleAnalyticsEvents::ADD_EVENT);
+
+    if (!empty($ga_events->getEvents())) {
+      foreach ($ga_events->getEvents() AS $event_name => $value) {
+        $script .= 'gtag("event", ' . Json::encode($event_name) . ', ' . Json::encode($value) . ');';
+      }
     }
     if (!empty($codesnippet_after)) {
       $script .= $codesnippet_after;
-    }
-
-    if ($config->get('track.adsense')) {
-      // Custom tracking. Prepend before all other JavaScript.
-      // @TODO: https://support.google.com/adsense/answer/98142
-      // sounds like it could be appended to $script.
-      $script = $googleanalytics_adsense_script . $script;
     }
 
     // Add additional Accounts to gTag.

@@ -178,6 +178,12 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
       '#title' => $this->t('Premium account'),
       '#type' => 'checkbox',
     ];
+    $form['general']['google_analytics_legacy'] = [
+      '#default_value' => $config->get('ua_legacy') ?? FALSE,
+      '#description' => $this->t('Backwards compatibility for old UA accounts. Uncheck for G- and newer accounts.'),
+      '#title' => $this->t('UA Legacy Mode'),
+      '#type' => 'checkbox',
+    ];
 
     // Visibility settings.
     $form['tracking_scope'] = [
@@ -775,6 +781,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
     $config
       ->set('account', $accounts)
       ->set('premium', $form_state->getValue('google_analytics_premium'))
+      ->set('ua_legacy', $form_state->getValue('google_analytics_legacy'))
       ->set('cross_domains', $form_state->getValue('google_analytics_cross_domains'))
       ->set('codesnippet.create', $form_state->getValue('google_analytics_codesnippet_create'))
       ->set('codesnippet.before', $form_state->getValue('google_analytics_codesnippet_before'))
