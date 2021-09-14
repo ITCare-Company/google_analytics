@@ -236,7 +236,7 @@ function google_analytics_form_user_form_alter(&$form, FormStateInterface $form_
   $profileForm = $form_state->getFormObject();
   /** @var Drupal\user\Entity\User $account */
   $account = $profileForm->getEntity();
-  /** @var \Drupal\google_analytics\Helper\VisiblityTracker $visibilityTracker */
+  /** @var \Drupal\google_analytics\Helpers\VisiblityTracker $visibilityTracker */
   $visibilityTracker = \Drupal::service('google_analytics.visibility');
 
   if ($account->hasPermission('opt-in or out of google analytics tracking') && ($visibility_user_account_mode = $config->get('visibility.user_account_mode')) != 0 && $visibilityTracker->getVisibilityRoles($account)) {
