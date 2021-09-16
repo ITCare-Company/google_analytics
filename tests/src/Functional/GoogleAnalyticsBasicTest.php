@@ -51,7 +51,7 @@ class GoogleAnalyticsBasicTest extends BrowserTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function setUp() {
+  protected function setUp() :void {
     parent::setUp();
 
     $permissions = [
@@ -88,12 +88,12 @@ class GoogleAnalyticsBasicTest extends BrowserTestBase {
 
     // Check for setting page's presence.
     $this->drupalGet('admin/config/services/google-analytics');
-    $this->assertRaw($this->t('Web Property ID'));
+    $this->assertRaw($this->t('Web Property ID(s)'));
 
     // Check for account code validation.
-    $edit['google_analytics_account'] = $this->randomMachineName(2);
+    $edit['gtag_ids[0][value]'] = $this->randomMachineName(2);
     $this->drupalPostForm('admin/config/services/google-analytics', $edit, $this->t('Save configuration'));
-    $this->assertRaw($this->t('A valid Google Analytics Web Property ID is case sensitive and formatted like UA-xxxxxxx-yy.'));
+    $this->assertRaw($this->t('A valid Google Analytics Web Property ID is case sensitive and formatted like UA-xxxxx-yy, G-xxxxxxxx, AW-xxxxxxxxx, or DC-xxxxxxxx.'));
 
     // User should have access to code snippets.
     $this->assertFieldByName('google_analytics_codesnippet_create');
@@ -254,12 +254,12 @@ class GoogleAnalyticsBasicTest extends BrowserTestBase {
     // Test if tracking of url fragments is enabled.
     $this->config('google_analytics.settings')->set('track.urlfragments', 1)->save();
     $this->drupalGet('');
-    $this->assertRaw('"page_path":location.pathname + location.search + location.hash});');
+    $this->assertRaw('"page_path":"location.pathname + location.search + location.hash"');
 
     // Test if tracking of url fragments is disabled.
     $this->config('google_analytics.settings')->set('track.urlfragments', 0)->save();
     $this->drupalGet('');
-    $this->assertNoRaw('"page_path":location.pathname + location.search + location.hash});');
+    $this->assertNoRaw('"page_path":"location.pathname + location.search + location.hash"');
 
     // Test whether single domain tracking is active.
     $this->drupalGet('');

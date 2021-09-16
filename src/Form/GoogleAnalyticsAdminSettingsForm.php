@@ -117,7 +117,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
     //$form['#tree'] = TRUE;
     $form['general']['google_analytics_account'] = [
       '#type' => 'fieldset',
-      '#title' => $this->t('Google Account(s)'),
+      '#title' => $this->t('Web Property ID(s)'),
       '#prefix' => '<div id="google_analytics_account-fieldset-wrapper">',
       '#description' => $this->t('This ID is unique to each site you want to track separately, and is in the form of UA-xxxxx-yy, G-xxxxxxxx, AW-xxxxxxxxx, or DC-xxxxxxxx. To get a Web Property ID, <a href=":analytics">register your site with Google Analytics</a>, or if you already have registered your site, go to your Google Analytics Settings page to see the ID next to every site profile. <a href=":webpropertyid">Find more information in the documentation</a>.', [':analytics' => 'https://marketingplatform.google.com/about/analytics/', ':webpropertyid' => Url::fromUri('https://developers.google.com/analytics/resources/concepts/gaConceptsAccounts', ['fragment' => 'webProperty'])->toString()]),
       '#suffix' => '</div>',

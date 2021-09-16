@@ -166,15 +166,25 @@ function google_analytics_page_attachments(array &$page) {
 
     // Get the event_dispatcher service and dispatch the event.
     $event_dispatcher = \Drupal::service('event_dispatcher');
-    $event_dispatcher->dispatch($ga_config, GoogleAnalyticsEvents::ADD_CONFIG);
+    $event_dispatcher->dispatch(GoogleAnalyticsEvents::ADD_CONFIG, $ga_config);
 
-    $script .= 'gtag("config", ' . Json::encode($default_id) . ', ' . Json::encode($ga_config->getConfig()) . ');';
+    // Json::encode() cannot convert custom URLs properly.
+    $config_array = $ga_config->getConfig();
+    $path = '';
+    if (isset($config_array['page_path'])) {
+      $path = $config_array['page_path'];
+      $config_array['page_path'] = 'PLACEHOLDER_URL_CUSTOM';
+    }
+    $arguments_json = Json::encode($config_array);
+    $arguments_json = str_replace('"PLACEHOLDER_URL_CUSTOM"', $path, $arguments_json);
+
+    $script .= 'gtag("config", ' . Json::encode($default_id) . ', ' . $arguments_json . ');';
 
     $ga_events = new GoogleAnalyticsEventsEvent($javascript);
 
     // Get the event_dispatcher service and dispatch the event.
     $event_dispatcher = \Drupal::service('event_dispatcher');
-    $event_dispatcher->dispatch($ga_events, GoogleAnalyticsEvents::ADD_EVENT);
+    $event_dispatcher->dispatch(GoogleAnalyticsEvents::ADD_EVENT, $ga_events);
 
     if (!empty($ga_events->getEvents())) {
       foreach ($ga_events->getEvents() AS $event_name => $value) {

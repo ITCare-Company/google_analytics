@@ -2,7 +2,7 @@
 
 namespace Drupal\google_analytics\Event;
 
-use Symfony\Contracts\EventDispatcher\Event;
+use Symfony\Component\EventDispatcher\Event;
 
 /**
  * Event that is fired when a user logs in.

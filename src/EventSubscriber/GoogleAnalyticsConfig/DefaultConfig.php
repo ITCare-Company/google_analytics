@@ -100,15 +100,15 @@ class DefaultConfig implements EventSubscriberInterface {
     }
 
     // Eliminate for GA 4.x
-    if ($this->config->get('privacy.anonymizeip')) {
-      $arguments['anonymize_ip'] = TRUE;
-    }
+    //if ($this->config->get('privacy.anonymizeip')) {
+    //  $arguments['anonymize_ip'] = TRUE;
+    //}
 
     $page_path = new PagePathEvent();
 
     // Get the event_dispatcher service and dispatch the event.
     $event_dispatcher = \Drupal::service('event_dispatcher');
-    $event_dispatcher->dispatch($page_path, GoogleAnalyticsEvents::PAGE_PATH);
+    $event_dispatcher->dispatch(GoogleAnalyticsEvents::PAGE_PATH, $page_path);
 
     // TODO: Rewrite this into the PagePath event that executes first.
     if ($this->config->get('track.urlfragments')) {

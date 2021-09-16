@@ -109,7 +109,10 @@ class GoogleAnalyticsCustomDimensionsAndMetricsTest extends BrowserTestBase {
       $custom_map['custom_map']['dimension' . $dimension['index']] = $dimension['name'];
       $custom_vars[$dimension['name']] = $dimension['value'];
     }
-    $this->assertRaw('gtag("config", ' . Json::encode($ua_code) . ', ' . Json::encode($custom_map) . ');');
+    // Verify the account ID exists in the config.
+    $this->assertRaw('gtag("config", ' . Json::encode($ua_code));
+    // Check the dimensions.
+    $this->assertRaw('"custom_map":' . Json::encode($custom_map['custom_map']));
     $this->assertRaw('gtag("event", "custom", ' . Json::encode($custom_vars) . ');');
 
     // Test whether tokens are replaced in custom dimension values.
@@ -228,7 +231,10 @@ class GoogleAnalyticsCustomDimensionsAndMetricsTest extends BrowserTestBase {
       $custom_map['custom_map']['metric' . $metric['index']] = $metric['name'];
       $custom_vars[$metric['name']] = (float) $metric['value'];
     }
-    $this->assertRaw('gtag("config", ' . Json::encode($ua_code) . ', ' . Json::encode($custom_map) . ');');
+    // Verify the account ID exists in the config.
+    $this->assertRaw('gtag("config", ' . Json::encode($ua_code));
+    // Check the dimensions.
+    $this->assertRaw('"custom_map":' . Json::encode($custom_map['custom_map']));
     $this->assertRaw('gtag("event", "custom", ' . Json::encode($custom_vars) . ');');
 
     // Test whether tokens are replaced in custom metric values.
@@ -277,7 +283,7 @@ class GoogleAnalyticsCustomDimensionsAndMetricsTest extends BrowserTestBase {
     $ua_code = 'UA-123456-1';
 
     // Check form validation.
-    $edit['google_analytics_account'] = $ua_code;
+    $edit['gtag_ids[0][value]'] = $ua_code;
     $edit['google_analytics_custom_dimension[indexes][1][name]'] = 'current_user_name';
     $edit['google_analytics_custom_dimension[indexes][1][value]'] = '[current-user:name]';
     $edit['google_analytics_custom_dimension[indexes][2][name]'] = 'current_user_edit_url';
