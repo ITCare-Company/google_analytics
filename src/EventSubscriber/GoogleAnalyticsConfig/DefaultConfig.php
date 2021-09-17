@@ -18,7 +18,7 @@ class DefaultConfig implements EventSubscriberInterface {
   /**
    * Drupal Config Factory
    *
-   * @var \Drupal\acquia_contenthub\Client\ProjectVersionClient
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
    */
   protected $config;
 
@@ -100,9 +100,9 @@ class DefaultConfig implements EventSubscriberInterface {
     }
 
     // Eliminate for GA 4.x
-    //if ($this->config->get('privacy.anonymizeip')) {
-    //  $arguments['anonymize_ip'] = TRUE;
-    //}
+    if ($this->config->get('privacy.anonymizeip')) {
+      $arguments['anonymize_ip'] = TRUE;
+    }
 
     $page_path = new PagePathEvent();
 

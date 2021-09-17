@@ -70,8 +70,6 @@ function google_analytics_page_attachments(array &$page) {
   /** @var \Drupal\google_analytics\Helpers\GoogleAnalyticsAccounts $ga_accounts */
   $ga_accounts = \Drupal::service('google_analytics.accounts');
 
-  $base_path = base_path();
-
   // Add module cache tags.
   $page['#cache']['tags'] = Cache::mergeTags(isset($page['#cache']['tags']) ? $page['#cache']['tags'] : [], $config->getCacheTags());
 

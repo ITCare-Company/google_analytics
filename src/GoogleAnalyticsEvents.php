@@ -4,8 +4,6 @@ namespace Drupal\google_analytics;
 
 /**
  * Defines events for the google_analytics module.
- *
- * @see \Drupal\google_analytics\Event\BuildGaJavascriptEvent
  */
 final class GoogleAnalyticsEvents {
 
@@ -45,7 +43,7 @@ final class GoogleAnalyticsEvents {
    *
    * @Event
    *
-   * @see \Drupal\google_analytics\Event\GoogleAnalyticsEventsEvent
+   * @see \Drupal\google_analytics\Event\GoogleAnalyticsConfigEvent
    *
    * @var string
    */

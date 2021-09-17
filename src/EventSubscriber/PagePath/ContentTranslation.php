@@ -21,7 +21,7 @@ class ContentTranslation implements EventSubscriberInterface {
   /**
    * Drupal Config Factory
    *
-   * @var \Drupal\acquia_contenthub\Client\ProjectVersionClient
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
    */
   protected $config;
 

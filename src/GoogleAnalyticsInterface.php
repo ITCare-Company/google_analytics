@@ -21,4 +21,9 @@ interface GoogleAnalyticsInterface {
    * Define the Acceptable tracking ID patterns
    */
   const GOOGLE_ANALYTICS_TRACKING_MATCH = '/(?:UA|G)-[0-9a-zA-Z]{5,}(?:-[0-9]{1,})?/';
+
+  /**
+   * Define the pattern matching a universal analytics account.
+   */
+  const GOOGLE_ANALYTICS_UA_MATCH = '/(?:UA)-[0-9a-zA-Z]{5,}(?:-[0-9]{1,})?/';
 }

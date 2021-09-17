@@ -191,6 +191,8 @@ class GoogleAnalyticsBasicTest extends BrowserTestBase {
     $this->config('google_analytics.settings')->set('visibility.request_path_mode', 0)->save();
     // Enable tracking code for all user roles.
     $this->config('google_analytics.settings')->set('visibility.user_role_roles', [])->save();
+    // Disable Anonymous Tracking since its enabled by default.
+    $this->config('google_analytics.settings')->set('privacy.anonymizeip', 0)->save();
 
     /* Sample JS code as added to page:
     <script type="text/javascript" src="/sites/all/modules/google_analytics/google_analytics.js?w"></script>
@@ -254,12 +256,12 @@ class GoogleAnalyticsBasicTest extends BrowserTestBase {
     // Test if tracking of url fragments is enabled.
     $this->config('google_analytics.settings')->set('track.urlfragments', 1)->save();
     $this->drupalGet('');
-    $this->assertRaw('"page_path":"location.pathname + location.search + location.hash"');
+    $this->assertRaw('"page_path":location.pathname + location.search + location.hash');
 
     // Test if tracking of url fragments is disabled.
     $this->config('google_analytics.settings')->set('track.urlfragments', 0)->save();
     $this->drupalGet('');
-    $this->assertNoRaw('"page_path":"location.pathname + location.search + location.hash"');
+    $this->assertNoRaw('"page_path":location.pathname + location.search + location.hash');
 
     // Test whether single domain tracking is active.
     $this->drupalGet('');

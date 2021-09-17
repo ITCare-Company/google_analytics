@@ -7,7 +7,7 @@ use Drupal\Component\Serialization\Json;
 /**
  * Class GaJavascript Object.
  *
- * @package Acquia\ContentHubClient\CDF
+ * @package Drupal\google_analytics
  */
 class GaJavascriptObject implements GaJavascriptInterface {
 

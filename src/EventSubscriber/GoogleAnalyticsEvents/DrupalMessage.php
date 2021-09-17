@@ -7,6 +7,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\google_analytics\Event\GoogleAnalyticsEventsEvent;
 use Drupal\google_analytics\GoogleAnalyticsEvents;
+use Drupal\google_analytics\Helpers\GoogleAnalyticsAccounts;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -17,7 +18,7 @@ class DrupalMessage implements EventSubscriberInterface {
   /**
    * Drupal Config Factory
    *
-   * @var \Drupal\acquia_contenthub\Client\ProjectVersionClient
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
    */
   protected $config;
 
@@ -29,14 +30,26 @@ class DrupalMessage implements EventSubscriberInterface {
   protected $messenger;
 
   /**
+   * Detect Legacy Universal Analytics Accounts
+   *
+   * @var bool
+   */
+  protected $isLegacy;
+
+  /**
    * DrupalMessage constructor.
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   Config Factory for Google Analytics Settings.
+   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
+   *   Messenger Factory.
+   * @param \Drupal\google_analytics\Helpers\GoogleAnalyticsAccounts $ga_accounts
+   *   The Google Analytics Account Service.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, MessengerInterface $messenger) {
+  public function __construct(ConfigFactoryInterface $config_factory, MessengerInterface $messenger, GoogleAnalyticsAccounts $ga_accounts) {
     $this->config = $config_factory->get('google_analytics.settings');
     $this->messenger = $messenger;
+    $this->isLegacy = $ga_accounts->isUniversalAnalyticsAccount();
   }
 
   /**
@@ -59,7 +72,6 @@ class DrupalMessage implements EventSubscriberInterface {
     if ($message_types = $this->config->get('track.messages')) {
       // Add messages tracking.
       $event_name = 'drupal_message';
-      $legacy_mode = $this->config->get('ua_legacy') ?? FALSE;
 
       $message_types = array_values(array_filter($message_types));
       $status_heading = [
@@ -73,8 +85,8 @@ class DrupalMessage implements EventSubscriberInterface {
         if (in_array($type, $message_types)) {
           foreach ($messages as $message) {
             // Compatibility with 3.x and UA format.
-            if ($legacy_mode) {
-              $event->addEvent(Json::encode($status_heading[$type]),
+            if ($this->isLegacy) {
+              $event->addEvent((string)$status_heading[$type],
                 ['event_category' => t('Messages'),
                  'event_label'    => strip_tags((string) $message)
                 ]);

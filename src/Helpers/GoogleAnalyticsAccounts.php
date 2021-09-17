@@ -13,16 +13,22 @@ use Drupal\google_analytics\GoogleAnalyticsInterface;
 class GoogleAnalyticsAccounts implements GoogleAnalyticsInterface {
 
   /**
+   * Private Key Service for generating user id hash.
+   *
    * @var string
    */
   protected $privateKey;
 
   /**
+   * The loaded config for the GA Module.
+   *
    * @var \Drupal\Core\Config\ImmutableConfig
    */
   private $config;
 
   /**
+   * The Google Analytics Accounts storage array.
+   *
    * @var array
    */
   private $accounts;
@@ -67,6 +73,11 @@ class GoogleAnalyticsAccounts implements GoogleAnalyticsInterface {
     return Crypt::hmacBase64($uid, $this->privateKey . Settings::getHashSalt());
   }
 
+  /**
+   * Get the default measurement ID. Defaults to the first account in config.
+   *
+   * @return false|mixed|string
+   */
   public function getDefaultMeasurementId() {
     // The top UA- or G- Account is the default measurement ID.
     foreach ($this->accounts as $account) {
@@ -74,14 +85,41 @@ class GoogleAnalyticsAccounts implements GoogleAnalyticsInterface {
         return $account;
       }
     }
+    return FALSE;
   }
 
+  /**
+   * Detects if there is a universal analytics account.
+   *
+   * If any account is UA, then this will return true.
+   *
+   * @return bool
+   */
+  public function isUniversalAnalyticsAccount() {
+    foreach ($this->accounts as $account) {
+      if (preg_match(self::GOOGLE_ANALYTICS_UA_MATCH, $account)) {
+        return TRUE;
+      }
+    }
+    return FALSE;
+  }
+
+  /**
+   * Get accounts that aren't the default measurement ID.
+   *
+   * @return array|false|string[]
+   */
   public function getAdditionalAccounts() {
     return array_filter($this->accounts, function($v) {
       return $v !== $this->getDefaultMeasurementId();
     });
   }
 
+  /**
+   * Return all the GA accounts stored.
+   *
+   * @return array|false|string[]
+   */
   public function getAccounts() {
     return $this->accounts;
   }
