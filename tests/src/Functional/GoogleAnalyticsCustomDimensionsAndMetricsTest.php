@@ -110,10 +110,10 @@ class GoogleAnalyticsCustomDimensionsAndMetricsTest extends BrowserTestBase {
       $custom_vars[$dimension['name']] = $dimension['value'];
     }
     // Verify the account ID exists in the config.
-    $this->assertRaw('gtag("config", ' . Json::encode($ua_code));
+    $this->assertSession()->responseContains('gtag("config", ' . Json::encode($ua_code));
     // Check the dimensions.
-    $this->assertRaw('"custom_map":' . Json::encode($custom_map['custom_map']));
-    $this->assertRaw('gtag("event", "custom", ' . Json::encode($custom_vars) . ');');
+    $this->assertSession()->responseContains('"custom_map":' . Json::encode($custom_map['custom_map']));
+    $this->assertSession()->responseContains('gtag("event", "custom", ' . Json::encode($custom_vars) . ');');
 
     // Test whether tokens are replaced in custom dimension values.
     $site_slogan = $this->randomMachineName(16);
@@ -164,26 +164,26 @@ class GoogleAnalyticsCustomDimensionsAndMetricsTest extends BrowserTestBase {
 
     // Test on frontpage.
     $this->drupalGet('');
-    $this->assertRaw(Json::encode('dimension1') . ':' . Json::encode($google_analytics_custom_dimension['1']['name']));
-    $this->assertRaw(Json::encode($google_analytics_custom_dimension['1']['name']) . ':' . Json::encode("Value: $site_slogan"));
-    $this->assertRaw(Json::encode('dimension2') . ':' . Json::encode($google_analytics_custom_dimension['2']['name']));
-    $this->assertRaw(Json::encode($google_analytics_custom_dimension['2']['name']) . ':' . Json::encode($google_analytics_custom_dimension['2']['value']));
-    $this->assertNoRaw(Json::encode('dimension3') . ':' . Json::encode($google_analytics_custom_dimension['3']['name']));
-    $this->assertNoRaw(Json::encode($google_analytics_custom_dimension['3']['name']) . ':' . Json::encode(''));
-    $this->assertRaw(Json::encode('dimension4') . ':' . Json::encode($google_analytics_custom_dimension['4']['name']));
-    $this->assertRaw(Json::encode($google_analytics_custom_dimension['4']['name']) . ':' . Json::encode('0'));
-    $this->assertNoRaw(Json::encode('dimension5') . ':' . Json::encode($google_analytics_custom_dimension['5']['name']));
-    $this->assertNoRaw(Json::encode($google_analytics_custom_dimension['5']['name']) . ':' . Json::encode('article'));
-    $this->assertRaw(Json::encode('dimension6') . ':' . Json::encode($google_analytics_custom_dimension['6']['name']));
-    $this->assertRaw(Json::encode($google_analytics_custom_dimension['6']['name']) . ':' . Json::encode(implode(',', \Drupal::currentUser()->getRoles())));
-    $this->assertRaw(Json::encode('dimension7') . ':' . Json::encode($google_analytics_custom_dimension['7']['name']));
-    $this->assertRaw(Json::encode($google_analytics_custom_dimension['7']['name']) . ':' . Json::encode(implode(',', array_keys(\Drupal::currentUser()->getRoles()))));
+    $this->assertSession()->responseContains(Json::encode('dimension1') . ':' . Json::encode($google_analytics_custom_dimension['1']['name']));
+    $this->assertSession()->responseContains(Json::encode($google_analytics_custom_dimension['1']['name']) . ':' . Json::encode("Value: $site_slogan"));
+    $this->assertSession()->responseContains(Json::encode('dimension2') . ':' . Json::encode($google_analytics_custom_dimension['2']['name']));
+    $this->assertSession()->responseContains(Json::encode($google_analytics_custom_dimension['2']['name']) . ':' . Json::encode($google_analytics_custom_dimension['2']['value']));
+    $this->assertSession()->responseNotContains(Json::encode('dimension3') . ':' . Json::encode($google_analytics_custom_dimension['3']['name']));
+    $this->assertSession()->responseNotContains(Json::encode($google_analytics_custom_dimension['3']['name']) . ':' . Json::encode(''));
+    $this->assertSession()->responseContains(Json::encode('dimension4') . ':' . Json::encode($google_analytics_custom_dimension['4']['name']));
+    $this->assertSession()->responseContains(Json::encode($google_analytics_custom_dimension['4']['name']) . ':' . Json::encode('0'));
+    $this->assertSession()->responseNotContains(Json::encode('dimension5') . ':' . Json::encode($google_analytics_custom_dimension['5']['name']));
+    $this->assertSession()->responseNotContains(Json::encode($google_analytics_custom_dimension['5']['name']) . ':' . Json::encode('article'));
+    $this->assertSession()->responseContains(Json::encode('dimension6') . ':' . Json::encode($google_analytics_custom_dimension['6']['name']));
+    $this->assertSession()->responseContains(Json::encode($google_analytics_custom_dimension['6']['name']) . ':' . Json::encode(implode(',', \Drupal::currentUser()->getRoles())));
+    $this->assertSession()->responseContains(Json::encode('dimension7') . ':' . Json::encode($google_analytics_custom_dimension['7']['name']));
+    $this->assertSession()->responseContains(Json::encode($google_analytics_custom_dimension['7']['name']) . ':' . Json::encode(implode(',', array_keys(\Drupal::currentUser()->getRoles()))));
 
     // Test on a node.
     $this->drupalGet('node/' . $node->id());
-    $this->assertText($node->getTitle());
-    $this->assertRaw(Json::encode('dimension5') . ':' . Json::encode($google_analytics_custom_dimension['5']['name']));
-    $this->assertRaw(Json::encode($google_analytics_custom_dimension['5']['name']) . ':' . Json::encode('article'));
+    $this->assertSession()->pageTextContains($node->getTitle());
+    $this->assertSession()->responseContains(Json::encode('dimension5') . ':' . Json::encode($google_analytics_custom_dimension['5']['name']));
+    $this->assertSession()->responseContains(Json::encode($google_analytics_custom_dimension['5']['name']) . ':' . Json::encode('article'));
   }
 
   /**
@@ -232,10 +232,10 @@ class GoogleAnalyticsCustomDimensionsAndMetricsTest extends BrowserTestBase {
       $custom_vars[$metric['name']] = (float) $metric['value'];
     }
     // Verify the account ID exists in the config.
-    $this->assertRaw('gtag("config", ' . Json::encode($ua_code));
+    $this->assertSession()->responseContains('gtag("config", ' . Json::encode($ua_code));
     // Check the dimensions.
-    $this->assertRaw('"custom_map":' . Json::encode($custom_map['custom_map']));
-    $this->assertRaw('gtag("event", "custom", ' . Json::encode($custom_vars) . ');');
+    $this->assertSession()->responseContains('"custom_map":' . Json::encode($custom_map['custom_map']));
+    $this->assertSession()->responseContains('gtag("event", "custom", ' . Json::encode($custom_vars) . ');');
 
     // Test whether tokens are replaced in custom metric values.
     $google_analytics_custom_metric = [
@@ -263,17 +263,17 @@ class GoogleAnalyticsCustomDimensionsAndMetricsTest extends BrowserTestBase {
       ],
     ];
     $this->config('google_analytics.settings')->set('custom.metric', $google_analytics_custom_metric)->save();
-    $this->verbose('<pre>' . print_r($google_analytics_custom_metric, TRUE) . '</pre>');
+    dump(print_r($google_analytics_custom_metric, TRUE));
 
     $this->drupalGet('');
-    $this->assertRaw(Json::encode('metric1') . ':' . Json::encode($google_analytics_custom_metric['1']['name']));
-    $this->assertRaw(Json::encode($google_analytics_custom_metric['1']['name']) . ':');
-    $this->assertRaw(Json::encode('metric2') . ':' . Json::encode($google_analytics_custom_metric['2']['name']));
-    $this->assertRaw(Json::encode($google_analytics_custom_metric['2']['name']) . ':' . Json::encode($google_analytics_custom_metric['2']['value']));
-    $this->assertNoRaw(Json::encode('metric3') . ':' . Json::encode($google_analytics_custom_metric['3']['name']));
-    $this->assertNoRaw(Json::encode($google_analytics_custom_metric['3']['name']) . ':' . Json::encode(''));
-    $this->assertRaw(Json::encode('metric4') . ':' . Json::encode($google_analytics_custom_metric['4']['name']));
-    $this->assertRaw(Json::encode($google_analytics_custom_metric['4']['name']) . ':' . Json::encode(0));
+    $this->assertSession()->responseContains(Json::encode('metric1') . ':' . Json::encode($google_analytics_custom_metric['1']['name']));
+    $this->assertSession()->responseContains(Json::encode($google_analytics_custom_metric['1']['name']) . ':');
+    $this->assertSession()->responseContains(Json::encode('metric2') . ':' . Json::encode($google_analytics_custom_metric['2']['name']));
+    $this->assertSession()->responseContains(Json::encode($google_analytics_custom_metric['2']['name']) . ':' . Json::encode($google_analytics_custom_metric['2']['value']));
+    $this->assertSession()->responseNotContains(Json::encode('metric3') . ':' . Json::encode($google_analytics_custom_metric['3']['name']));
+    $this->assertSession()->responseNotContains(Json::encode($google_analytics_custom_metric['3']['name']) . ':' . Json::encode(''));
+    $this->assertSession()->responseContains(Json::encode('metric4') . ':' . Json::encode($google_analytics_custom_metric['4']['name']));
+    $this->assertSession()->responseContains(Json::encode($google_analytics_custom_metric['4']['name']) . ':' . Json::encode(0));
   }
 
   /**
@@ -297,12 +297,12 @@ class GoogleAnalyticsCustomDimensionsAndMetricsTest extends BrowserTestBase {
 
     $this->drupalPostForm('admin/config/services/google-analytics', $edit, $this->t('Save configuration'));
 
-    $this->assertRaw($this->t('The %element-title is using the following forbidden tokens with personal identifying information: @invalid-tokens.', ['%element-title' => $this->t('Custom dimension value #@index', ['@index' => 1]), '@invalid-tokens' => implode(', ', ['[current-user:name]'])]));
-    $this->assertRaw($this->t('The %element-title is using the following forbidden tokens with personal identifying information: @invalid-tokens.', ['%element-title' => $this->t('Custom dimension value #@index', ['@index' => 2]), '@invalid-tokens' => implode(', ', ['[current-user:edit-url]'])]));
-    $this->assertRaw($this->t('The %element-title is using the following forbidden tokens with personal identifying information: @invalid-tokens.', ['%element-title' => $this->t('Custom dimension value #@index', ['@index' => 3]), '@invalid-tokens' => implode(', ', ['[user:name]'])]));
+    $this->assertSession()->responseContains($this->t('The %element-title is using the following forbidden tokens with personal identifying information: @invalid-tokens.', ['%element-title' => $this->t('Custom dimension value #@index', ['@index' => 1]), '@invalid-tokens' => implode(', ', ['[current-user:name]'])]));
+    $this->assertSession()->responseContains($this->t('The %element-title is using the following forbidden tokens with personal identifying information: @invalid-tokens.', ['%element-title' => $this->t('Custom dimension value #@index', ['@index' => 2]), '@invalid-tokens' => implode(', ', ['[current-user:edit-url]'])]));
+    $this->assertSession()->responseContains($this->t('The %element-title is using the following forbidden tokens with personal identifying information: @invalid-tokens.', ['%element-title' => $this->t('Custom dimension value #@index', ['@index' => 3]), '@invalid-tokens' => implode(', ', ['[user:name]'])]));
     // BUG #2037595
-    //$this->assertNoRaw($this->t('The %element-title is using the following forbidden tokens with personal identifying information: @invalid-tokens.', ['%element-title' => t('Custom dimension value #@index', ['@index' => 4]), '@invalid-tokens' => implode(', ', ['[term:name]'])]));
-    //$this->assertNoRaw($this->t('The %element-title is using the following forbidden tokens with personal identifying information: @invalid-tokens.', ['%element-title' => t('Custom dimension value #@index', ['@index' => 5]), '@invalid-tokens' => implode(', ', ['[term:tid]'])]));
+    //$this->assertSession()->responseNotContains($this->t('The %element-title is using the following forbidden tokens with personal identifying information: @invalid-tokens.', ['%element-title' => t('Custom dimension value #@index', ['@index' => 4]), '@invalid-tokens' => implode(', ', ['[term:name]'])]));
+    //$this->assertSession()->responseNotContains($this->t('The %element-title is using the following forbidden tokens with personal identifying information: @invalid-tokens.', ['%element-title' => t('Custom dimension value #@index', ['@index' => 5]), '@invalid-tokens' => implode(', ', ['[term:tid]'])]));
   }
 
 }
