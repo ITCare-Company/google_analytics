@@ -78,11 +78,11 @@ class Search implements EventSubscriberInterface {
       if (isset($entity)) {
         $entity_id = $entity->id();
         $url_custom = '(window.google_analytics_search_results) ? ' . Json::encode(Url::fromRoute('search.view_' . $entity_id, [], ['query' => ['search' => $keys]])
-            ->toString()) . ' : ' . Json::encode(Url::fromRoute('search.view_' . $entity_id, [
-            'query' => [
-              'search' => 'no-results:' . $keys,
-              'cat' => 'no-results'
-            ]
+            ->toString()) . ' : ' . Json::encode(Url::fromRoute('search.view_' . $entity_id, [], [
+              'query' => [
+                'search' => 'no-results:' . $keys,
+                'cat' => 'no-results'
+              ]
           ])->toString());
         $event->setPagePath($url_custom);
         $event->stopPropagation();

@@ -86,6 +86,8 @@ class GoogleAnalyticsSearchTest extends BrowserTestBase {
     $this->drupalGet('search/node');
     $this->submitForm($search, $this->t('Search'));
     $this->assertSession()->responseContains('gtag("config", ' . Json::encode($ua_code) . ', {"groups":"default","page_path":(window.google_analytics_search_results) ?');
+    // Check GA Site Search query param is 'search' when there are no results.
+    $this->assertSession()->responseMatches('/(.+search=' . urlencode("no-results:{$search['keys']}") . ')/');
     $this->assertSession()->responseContains('window.google_analytics_search_results = 0;');
 
     // Create a node and reindex.
@@ -93,6 +95,8 @@ class GoogleAnalyticsSearchTest extends BrowserTestBase {
     $this->drupalGet('search/node');
     $this->submitForm($search, $this->t('Search'));
     $this->assertSession()->responseContains('gtag("config", ' . Json::encode($ua_code) . ', {"groups":"default","page_path":(window.google_analytics_search_results) ?');
+    // Check the GA Site Search query param is 'search'.
+    $this->assertSession()->responseMatches('/(.+search=' . urlencode($search['keys']) . ')/');
     $this->assertSession()->responseContains('window.google_analytics_search_results = 1;');
 
     // Create a second node with same values and reindex.
