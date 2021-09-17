@@ -11,7 +11,7 @@
   ],
   "support": {
     "issues": "https://www.drupal.org/project/issues/google_analytics",
-    "source": "https://git.drupal.org/project/google_analytics.git"
+    "source": "https://git.drupalcode.org/project/google_analytics"
   },
   "license": "GPL-2.0-or-later",
   "require": {
