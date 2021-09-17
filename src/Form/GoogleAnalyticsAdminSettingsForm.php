@@ -57,6 +57,8 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
    *   The manages modules.
    * @param \Drupal\google_analytics\Helpers\GoogleAnalyticsAccounts $google_analytics_accounts
    *   The google analytics accounts manager.
+   * @param \Drupal\google_analytics\JavascriptLocalCache $google_analytics_javascript
+   *   The JS Local Cache service.
    */
   public function __construct(ConfigFactoryInterface $config_factory, AccountInterface $current_user, ModuleHandlerInterface $module_handler, GoogleAnalyticsAccounts $google_analytics_accounts, JavascriptLocalCache $google_analytics_javascript) {
     parent::__construct($config_factory);

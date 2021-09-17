@@ -8,7 +8,7 @@ use Drupal\Core\Entity\EntityRepositoryInterface;
 use Drupal\Core\Extension\ModuleHandler;
 use Drupal\Core\Url;
 use Drupal\google_analytics\Event\PagePathEvent;
-use Drupal\google_analytics\GoogleAnalyticsEvents;
+use Drupal\google_analytics\Constants\GoogleAnalyticsEvents;
 use Drupal\node\NodeInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RequestStack;

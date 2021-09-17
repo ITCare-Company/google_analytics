@@ -4,7 +4,7 @@ namespace Drupal\google_analytics\EventSubscriber\PagePath;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\google_analytics\Event\PagePathEvent;
-use Drupal\google_analytics\GoogleAnalyticsEvents;
+use Drupal\google_analytics\Constants\GoogleAnalyticsEvents;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 

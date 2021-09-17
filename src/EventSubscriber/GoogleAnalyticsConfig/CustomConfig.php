@@ -7,7 +7,7 @@ use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\Core\Utility\Token;
 use Drupal\google_analytics\Event\GoogleAnalyticsConfigEvent;
 use Drupal\google_analytics\Event\GoogleAnalyticsEventsEvent;
-use Drupal\google_analytics\GoogleAnalyticsEvents;
+use Drupal\google_analytics\Constants\GoogleAnalyticsEvents;
 use Drupal\google_analytics\Helpers\GoogleAnalyticsAccounts;
 use Drupal\node\NodeInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;

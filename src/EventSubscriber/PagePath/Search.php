@@ -8,7 +8,7 @@ use Drupal\Core\Extension\ModuleHandler;
 use Drupal\Core\Routing\CurrentRouteMatch;
 use Drupal\Core\Url;
 use Drupal\google_analytics\Event\PagePathEvent;
-use Drupal\google_analytics\GoogleAnalyticsEvents;
+use Drupal\google_analytics\Constants\GoogleAnalyticsEvents;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 

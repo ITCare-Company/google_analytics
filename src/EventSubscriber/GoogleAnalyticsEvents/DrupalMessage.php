@@ -6,7 +6,7 @@ use Drupal\Component\Serialization\Json;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\google_analytics\Event\GoogleAnalyticsEventsEvent;
-use Drupal\google_analytics\GoogleAnalyticsEvents;
+use Drupal\google_analytics\Constants\GoogleAnalyticsEvents;
 use Drupal\google_analytics\Helpers\GoogleAnalyticsAccounts;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 

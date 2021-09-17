@@ -6,7 +6,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\google_analytics\Event\GoogleAnalyticsConfigEvent;
 use Drupal\google_analytics\Event\PagePathEvent;
-use Drupal\google_analytics\GoogleAnalyticsEvents;
+use Drupal\google_analytics\Constants\GoogleAnalyticsEvents;
 use Drupal\google_analytics\Helpers\GoogleAnalyticsAccounts;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
