@@ -130,7 +130,7 @@ class CustomConfig implements EventSubscriberInterface {
           $google_analytics_custom_var['value'] = $this->token->replace($google_analytics_custom_var['value'], $types, ['clear' => TRUE]);
 
           // Suppress empty values.
-          if (!mb_strlen(trim($google_analytics_custom_var['name'])) || !mb_strlen(trim($google_analytics_custom_var['value']))) {
+          if ((isset($google_analytics_custom_var['name']) && !mb_strlen(trim($google_analytics_custom_var['name']))) || !mb_strlen(trim($google_analytics_custom_var['value']))) {
             continue;
           }
 
@@ -148,8 +148,10 @@ class CustomConfig implements EventSubscriberInterface {
           };
 
           // Build the arrays of values.
-          $this->custom_map['custom_map'][$google_analytics_custom_type . $google_analytics_custom_var['index']] = $google_analytics_custom_var['name'];
-          $this->custom_vars[$google_analytics_custom_var['name']] = $google_analytics_custom_var['value'];
+          $this->custom_map['custom_map'][$google_analytics_custom_type . $google_analytics_custom_var['index']] = (isset($google_analytics_custom_var['name']) ?? "");
+          if (isset($google_analytics_custom_var['name'])) {
+            $this->custom_vars[$google_analytics_custom_var['name']] = $google_analytics_custom_var['value'];
+          }
         }
       }
     }
