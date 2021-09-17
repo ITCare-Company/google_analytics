@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\google_analytics;
+namespace Drupal\google_analytics\Constants;
 
 /**
  * Defines events for the google_analytics module.

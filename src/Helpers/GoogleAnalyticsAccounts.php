@@ -1,16 +1,14 @@
 <?php
 
-
 namespace Drupal\google_analytics\Helpers;
-
 
 use Drupal\Component\Utility\Crypt;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\PrivateKey;
 use Drupal\Core\Site\Settings;
-use Drupal\google_analytics\GoogleAnalyticsInterface;
+use Drupal\google_analytics\Constants\GoogleAnalyticsPatterns;
 
-class GoogleAnalyticsAccounts implements GoogleAnalyticsInterface {
+class GoogleAnalyticsAccounts {
 
   /**
    * Private Key Service for generating user id hash.
@@ -81,7 +79,7 @@ class GoogleAnalyticsAccounts implements GoogleAnalyticsInterface {
   public function getDefaultMeasurementId() {
     // The top UA- or G- Account is the default measurement ID.
     foreach ($this->accounts as $account) {
-      if (preg_match(self::GOOGLE_ANALYTICS_TRACKING_MATCH, $account)) {
+      if (preg_match(GoogleAnalyticsPatterns::GOOGLE_ANALYTICS_TRACKING_MATCH, $account)) {
         return $account;
       }
     }
@@ -97,7 +95,7 @@ class GoogleAnalyticsAccounts implements GoogleAnalyticsInterface {
    */
   public function isUniversalAnalyticsAccount() {
     foreach ($this->accounts as $account) {
-      if (preg_match(self::GOOGLE_ANALYTICS_UA_MATCH, $account)) {
+      if (preg_match(GoogleAnalyticsPatterns::GOOGLE_ANALYTICS_UA_MATCH, $account)) {
         return TRUE;
       }
     }

@@ -8,10 +8,10 @@ use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\google_analytics\Constants\GoogleAnalyticsPatterns;
 use Drupal\google_analytics\Helpers\GoogleAnalyticsAccounts;
 use Drupal\google_analytics\JavascriptLocalCache;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\google_analytics\GoogleAnalyticsInterface;
 
 /**
  * Configure Google_Analytics settings for this site.
@@ -372,7 +372,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
       '#title_display' => 'invisible',
       '#type' => 'textfield',
       '#default_value' => $config->get('track.files_extensions'),
-      '#description' => $this->t('A file extension list separated by the | character that will be tracked as download when clicked. Regular expressions are supported. For example: @extensions', ['@extensions' => GoogleAnalyticsInterface::GOOGLE_ANALYTICS_TRACKFILES_EXTENSIONS]),
+      '#description' => $this->t('A file extension list separated by the | character that will be tracked as download when clicked. Regular expressions are supported. For example: @extensions', ['@extensions' => GoogleAnalyticsPatterns::GOOGLE_ANALYTICS_TRACKFILES_EXTENSIONS]),
       '#maxlength' => 500,
       '#states' => [
         'enabled' => [
@@ -810,7 +810,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
     $gtag_id = isset($element['#value']) ? $element['#value'] : $element['#default_value'];
     $gtag_id = trim($gtag_id);
     $gtag_id = str_replace(['–', '—', '−'], '-', $gtag_id);
-    if (!preg_match(GoogleAnalyticsInterface::GOOGLE_ANALYTICS_GTAG_MATCH, $gtag_id)) {
+    if (!preg_match(GoogleAnalyticsPatterns::GOOGLE_ANALYTICS_GTAG_MATCH, $gtag_id)) {
       $form_state->setError($element, t('A valid Google Analytics Web Property ID is case sensitive and formatted like UA-xxxxx-yy, G-xxxxxxxx, AW-xxxxxxxxx, or DC-xxxxxxxx.'));
     }
   }

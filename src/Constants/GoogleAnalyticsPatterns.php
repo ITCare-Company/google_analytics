@@ -1,11 +1,11 @@
 <?php
 
-namespace Drupal\google_analytics;
+namespace Drupal\google_analytics\Constants;
 
 /**
- * Provides an interface.
+ * Defines regex patterns for matching Google Analytics variables.
  */
-interface GoogleAnalyticsInterface {
+final class GoogleAnalyticsPatterns {
 
   /**
    * Define the default file extension list that should be tracked as download.
