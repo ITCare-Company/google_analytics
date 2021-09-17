@@ -74,10 +74,19 @@ class Search implements EventSubscriberInterface {
     if ($this->moduleHandler->moduleExists('search') && $this->config->get('track.site_search') && (strpos($this->currentRoute->getRouteName(), 'search.view') === 0) && $keys = ($this->request->query->has('keys') ? trim($this->request->get('keys')) : '')) {
       // hook_item_list__search_results() is not executed if search result is
       // empty. Make sure the counter is set to 0 if there are no results.
-      $entity_id = $this->currentRoute->getParameter('entity')->id();
-      $url_custom = '(window.google_analytics_search_results) ? ' . Json::encode(Url::fromRoute('search.view_' . $entity_id, [], ['query' => ['search' => $keys]])->toString()) . ' : ' . Json::encode(Url::fromRoute('search.view_' . $entity_id, ['query' => ['search' => 'no-results:' . $keys, 'cat' => 'no-results']])->toString());
-      $event->setPagePath($url_custom);
-      $event->stopPropagation();
+      $entity = $this->currentRoute->getParameter('entity');
+      if (isset($entity)) {
+        $entity_id = $entity->id();
+        $url_custom = '(window.google_analytics_search_results) ? ' . Json::encode(Url::fromRoute('search.view_' . $entity_id, [], ['query' => ['search' => $keys]])
+            ->toString()) . ' : ' . Json::encode(Url::fromRoute('search.view_' . $entity_id, [
+            'query' => [
+              'search' => 'no-results:' . $keys,
+              'cat' => 'no-results'
+            ]
+          ])->toString());
+        $event->setPagePath($url_custom);
+        $event->stopPropagation();
+      }
     }
   }
 }
