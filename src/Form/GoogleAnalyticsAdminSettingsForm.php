@@ -361,8 +361,13 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
     ];
     $form['tracking']['linktracking']['google_analytics_trackmailto'] = [
       '#type' => 'checkbox',
-      '#title' => $this->t('Track clicks on mailto links'),
+      '#title' => $this->t('Track clicks on mailto (email) links'),
       '#default_value' => $config->get('track.mailto'),
+    ];
+    $form['tracking']['linktracking']['google_analytics_tracktel'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Track clicks on tel (telephone number) links'),
+      '#default_value' => $config->get('track.tel'),
     ];
     $form['tracking']['linktracking']['google_analytics_trackfiles'] = [
       '#type' => 'checkbox',
@@ -785,6 +790,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
       ->set('track.urlfragments', $form_state->getValue('google_analytics_trackurlfragments'))
       ->set('track.userid', $form_state->getValue('google_analytics_trackuserid'))
       ->set('track.mailto', $form_state->getValue('google_analytics_trackmailto'))
+      ->set('track.tel', $form_state->getValue('google_analytics_tracktel'))
       ->set('track.messages', $form_state->getValue('google_analytics_trackmessages'))
       ->set('track.outbound', $form_state->getValue('google_analytics_trackoutbound'))
       ->set('track.site_search', $form_state->getValue('google_analytics_site_search'))

@@ -111,6 +111,7 @@ Body:
 ```
 <ul>
   <li><a href="mailto:foo@example.com">Mailto</a></li>
+  <li><a href="tel:+1-303-499-7111">Tel</a></li>
   <li><a href="/files/test.txt">Download file</a></li>
   <li><a class="colorbox" href="#">Open colorbox</a></li>
   <li><a href="https://example.com/">External link</a></li>

@@ -106,6 +106,9 @@ function google_analytics_page_attachments(array &$page) {
     if ($track_mailto = $config->get('track.mailto')) {
       $link_settings['trackMailto'] = $track_mailto;
     }
+    if ($track_tel = $config->get('track.tel')) {
+      $link_settings['trackTel'] = $track_tel;
+    }
     if (($track_download = $config->get('track.files')) && ($trackfiles_extensions = $config->get('track.files_extensions'))) {
       $link_settings['trackDownload'] = $track_download;
       $link_settings['trackDownloadExtensions'] = $trackfiles_extensions;

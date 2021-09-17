@@ -98,3 +98,13 @@ function google_analytics_update_8300() {
 
   return t('Migrated create only fields to gtag.js parameters.');
 }
+
+/**
+ * Set default config for tel: link tracking.
+ */
+function google_analytics_update_8301() {
+  \Drupal::configFactory()
+    ->getEditable('google_analytics.settings')
+    ->set('track.tel', TRUE)
+    ->save();
+}

@@ -48,6 +48,9 @@ google_analytics.settings:
         mailto:
           type: boolean
           label: 'Track clicks on mailto links'
+        tel:
+          type: boolean
+          label: 'Track clicks on tel links'
         files:
           type: boolean
           label: 'Track downloads'
