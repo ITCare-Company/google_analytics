@@ -135,7 +135,6 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
       $form['general']['google_analytics_account']['gtag_ids'][$i]['value'] = [
         '#default_value' => $accounts[$i] ?? '',
         '#maxlength' => 20,
-        '#placeholder' => 'UA-',
         '#required' => TRUE,
         '#size' => 20,
         '#type' => 'textfield',
@@ -170,19 +169,6 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
         'callback' => '::gtagFieldCallback',
         'wrapper' => 'google_analytics_account-fieldset-wrapper',
       ],
-    ];
-
-    $form['general']['google_analytics_premium'] = [
-      '#default_value' => $config->get('premium'),
-      '#description' => $this->t('If you are a Google Analytics Premium customer, you can use up to 200 instead of 20 custom dimensions and metrics.'),
-      '#title' => $this->t('Premium account'),
-      '#type' => 'checkbox',
-    ];
-    $form['general']['google_analytics_legacy'] = [
-      '#default_value' => $config->get('ua_legacy') ?? FALSE,
-      '#description' => $this->t('Backwards compatibility for old UA accounts. Uncheck for G- and newer accounts.'),
-      '#title' => $this->t('UA Legacy Mode'),
-      '#type' => 'checkbox',
     ];
 
     // Visibility settings.
@@ -507,7 +493,9 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
 
     // Standard Google Analytics accounts support up to 20 custom dimensions,
     // premium accounts support up to 200 custom dimensions.
-    $limit = ($config->get('premium')) ? 200 : 20;
+    // TODO: Make the custom dimensions auto incrementable.
+    //$limit = ($config->get('premium')) ? 200 : 20;
+    $limit = 20;
     for ($i = 1; $i <= $limit; $i++) {
       $form['google_analytics_custom_dimension']['indexes'][$i]['index'] = [
         '#default_value' => $i,
@@ -780,7 +768,6 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
 
     $config
       ->set('account', $accounts)
-      ->set('premium', $form_state->getValue('google_analytics_premium'))
       ->set('ua_legacy', $form_state->getValue('google_analytics_legacy'))
       ->set('cross_domains', $form_state->getValue('google_analytics_cross_domains'))
       ->set('codesnippet.create', $form_state->getValue('google_analytics_codesnippet_create'))
