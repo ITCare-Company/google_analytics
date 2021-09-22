@@ -39,12 +39,9 @@ class GoogleAnalyticsEventsEvent extends Event {
 
   /**
    * Get the GA Javascript Object being created.
-   *
-   * @return \Drupal\google_analytics\GaJavascriptObject
-   *   The GA Javascript object.
    */
-  public function addEvent($event_name, $value) {
-    $this->javascript->addEvent($event_name, $value);
+  public function addEvent($event) {
+    $this->javascript->addEvent($event);
   }
 
 }

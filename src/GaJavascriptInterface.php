@@ -45,25 +45,12 @@ interface GaJavascriptInterface {
   public function getEvents();
 
   /**
-   * Returns a specific GA Event.
-   *
-   * @param string $event_name
-   *   GA Event ID.
-   *
-   * @return array
-   *   Object event data.
-   */
-  public function getEvent($event_name);
-
-  /**
    * Appends an event to the Javascript object.
    *
-   * @param string $event_name
-   *   Event Name.
-   * @param array $value
-   *   The event value.
+   * @param array $event
+   *   The event.
    */
-  public function addEvent($event_name, $value);
+  public function addEvent(array $event);
 
   /**
    * Converts object to array.

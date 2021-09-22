@@ -188,8 +188,10 @@ function google_analytics_page_attachments(array &$page) {
     $event_dispatcher->dispatch(GoogleAnalyticsEvents::ADD_EVENT, $ga_events);
 
     if (!empty($ga_events->getEvents())) {
-      foreach ($ga_events->getEvents() AS $event_name => $value) {
-        $script .= 'gtag("event", ' . Json::encode($event_name) . ', ' . Json::encode($value) . ');';
+      foreach ($ga_events->getEvents() as $event) {
+        $event_name = array_key_first($event);
+        $event_parameters = $event[$event_name];
+        $script .= 'gtag("event", ' . Json::encode($event_name) . ', ' . Json::encode($event_parameters) . ');';
       }
     }
     if (!empty($codesnippet_after)) {

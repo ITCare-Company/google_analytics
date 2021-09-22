@@ -2,25 +2,16 @@
 
 namespace Drupal\google_analytics\EventSubscriber\GoogleAnalyticsEvents;
 
-use Drupal\Component\Serialization\Json;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\google_analytics\Event\GoogleAnalyticsEventsEvent;
 use Drupal\google_analytics\Constants\GoogleAnalyticsEvents;
 use Drupal\google_analytics\Helpers\GoogleAnalyticsAccounts;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
  * Adds Drupal Messages to GA Javascript.
  */
-class DrupalMessage implements EventSubscriberInterface {
-
-  /**
-   * Drupal Config Factory
-   *
-   * @var \Drupal\Core\Config\ConfigFactoryInterface
-   */
-  protected $config;
+class DrupalMessage extends GoogleAnalyticsEventBase {
 
   /**
    * Drupal Messenger Service.
@@ -30,49 +21,23 @@ class DrupalMessage implements EventSubscriberInterface {
   protected $messenger;
 
   /**
-   * Detect Legacy Universal Analytics Accounts
-   *
-   * @var bool
-   */
-  protected $isLegacy;
-
-  /**
    * DrupalMessage constructor.
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   Config Factory for Google Analytics Settings.
-   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
-   *   Messenger Factory.
    * @param \Drupal\google_analytics\Helpers\GoogleAnalyticsAccounts $ga_accounts
    *   The Google Analytics Account Service.
+   * @param \Drupal\Core\Messenger\MessengerInterface $messenger
+   *   Messenger Factory.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, MessengerInterface $messenger, GoogleAnalyticsAccounts $ga_accounts) {
-    $this->config = $config_factory->get('google_analytics.settings');
+  public function __construct(ConfigFactoryInterface $config_factory, GoogleAnalyticsAccounts $ga_accounts, MessengerInterface $messenger) {
+    parent::__construct($config_factory, $ga_accounts);
     $this->messenger = $messenger;
-    $this->isLegacy = $ga_accounts->isUniversalAnalyticsAccount();
   }
 
-  /**
-   * {@inheritdoc}
-   */
-  public static function getSubscribedEvents() {
-    $events[GoogleAnalyticsEvents::ADD_EVENT][] = ['onAddEvent'];
-    return $events;
-  }
-
-  /**
-   * Adds a new event to the Ga Javascript
-   *
-   * @param \Drupal\google_analytics\Event\GoogleAnalyticsEventsEvent $event
-   *   The event being dispatched.
-   *
-   * @throws \Exception
-   */
-  public function onAddEvent(GoogleAnalyticsEventsEvent $event) {
-    if ($message_types = $this->config->get('track.messages')) {
-      // Add messages tracking.
-      $event_name = 'drupal_message';
-
+  public function addEvent(): array {
+    $events = [];
+    if ($message_types = $this->ga_config->get('track.messages')) {
       $message_types = array_values(array_filter($message_types));
       $status_heading = [
         'status' => t('Status message'),
@@ -86,20 +51,22 @@ class DrupalMessage implements EventSubscriberInterface {
           foreach ($messages as $message) {
             // Compatibility with 3.x and UA format.
             if ($this->isLegacy) {
-              $event->addEvent((string)$status_heading[$type],
-                ['event_category' => t('Messages'),
-                 'event_label'    => strip_tags((string) $message)
-                ]);
+              $events[] = [(string)$status_heading[$type] =>
+                ['event_category' => (string)t('Messages'),
+                  'event_label'    => strip_tags((string) $message)
+                ]
+              ];
             }
             else {
-              $event->addEvent($event_name, [
-                'message_type' => $status_heading[$type],
-                'value' => strip_tags((string) $message),
-              ]);
+              $events[] = [(string)$status_heading[$type] =>
+                ['value' => strip_tags((string) $message)]
+              ];
             }
           }
         }
       }
     }
+    return $events;
   }
+
 }

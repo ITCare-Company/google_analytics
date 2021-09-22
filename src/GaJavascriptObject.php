@@ -128,18 +128,8 @@ class GaJavascriptObject implements GaJavascriptInterface {
     return $this->events;
   }
 
-  /**
-   * {@inheritdoc}
-   */
-  public function getEvent($event_name) {
-    if (isset($this->events['event_name'])) {
-      return $this->events['event_name'];
-    }
-    return [];
-  }
-
-  public function addEvent($event_name, $value) {
-    $this->events[$event_name] = $value;
+  public function addEvent(array $event) {
+    $this->events[] = $event;
   }
 
   public function getCustomUrl() {
