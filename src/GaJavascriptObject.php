@@ -67,16 +67,11 @@ class GaJavascriptObject implements GaJavascriptInterface {
    */
   public static function fromArray(array $data) {
     $object = new static($data['measurement_id'], $data['config']['measurement_id']);
-    foreach ($data['events'] as $event_name => $value) {
-      if (!$event = $object->getEvent($event_name)) {
-          $object->addEvent($event_name, $value);
-        }
-      }
     return $object;
   }
 
   /**
-   * Static Factory method to format data from JSON into the CDFObject.
+   * Static Factory method to format data from JSON into the Javascript Object.
    *
    * @param string $json
    *   Data in JSON format.

@@ -35,7 +35,7 @@ class DrupalMessage extends GoogleAnalyticsEventBase {
     $this->messenger = $messenger;
   }
 
-  public function addEvent(): array {
+  public function addGaEvent(): array {
     $events = [];
     if ($message_types = $this->ga_config->get('track.messages')) {
       $message_types = array_values(array_filter($message_types));

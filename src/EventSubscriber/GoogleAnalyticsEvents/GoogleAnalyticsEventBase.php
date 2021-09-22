@@ -66,7 +66,7 @@ abstract class GoogleAnalyticsEventBase implements EventSubscriberInterface {
    *
    * @return array
    */
-  abstract public function addEvent(): array;
+  abstract public function addGaEvent(): array;
 
   /**
    * Adds a new event to the Ga Javascript
@@ -75,7 +75,7 @@ abstract class GoogleAnalyticsEventBase implements EventSubscriberInterface {
    *   The event being dispatched.
    */
   public function onAddEvent(GoogleAnalyticsEventsEvent $event) {
-    $ga_events = $this->addEvent();
+    $ga_events = $this->addGaEvent();
     if (!empty($ga_events)) {
       foreach($ga_events AS $ga_event) {
         $event->addEvent($ga_event);

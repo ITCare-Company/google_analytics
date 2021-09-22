@@ -18,10 +18,10 @@ class GoogleAnalyticsEventsEvent extends Event {
   protected $javascript;
 
   /**
-   * CdfAttributesEvent constructor.
+   * GoogleAnalyticsEventsEvent constructor.
    *
    * @param \Drupal\google_analytics\GaJavascriptObject $javascript
-   *   The CDF object.
+   *   The GA Javascript object.
    */
   public function __construct(GaJavascriptObject $javascript) {
     $this->javascript = $javascript;

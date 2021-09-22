@@ -108,7 +108,7 @@ class CustomConfig implements EventSubscriberInterface {
     if (empty($this->custom_vars)) {
       return;
     }
-    $event->addEvent('custom', $this->custom_vars);
+    $event->addEvent(['custom' => $this->custom_vars]);
   }
 
   protected function populateCustomConfig() {
