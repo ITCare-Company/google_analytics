@@ -49,7 +49,7 @@ abstract class GoogleAnalyticsEventBase implements EventSubscriberInterface {
    */
   public function __construct(ConfigFactoryInterface $config_factory, GoogleAnalyticsAccounts $ga_accounts) {
     $this->ga_config = $config_factory->get('google_analytics.settings');
-    $this->isLegacy = $ga_accounts->isUniversalAnalyticsAccount();
+    $this->isLegacy = $ga_accounts->getDefaultMeasurementId()->isUniversalAnalyticsAccount();
   }
 
   /**

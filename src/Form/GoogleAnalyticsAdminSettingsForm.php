@@ -2,6 +2,7 @@
 
 namespace Drupal\google_analytics\Form;
 
+use Drupal\Component\Utility\Html;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\ConfigFormBase;
@@ -102,12 +103,6 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
   public function buildForm(array $form, FormStateInterface $form_state) {
     $config = $this->config('google_analytics.settings');
 
-    $form['general'] = [
-      '#type' => 'details',
-      '#title' => $this->t('General'),
-      '#open' => TRUE,
-    ];
-
     $id_count = $form_state->get('id_count');
     // If the id_count is null, we're loading for the first time, load in IDS.
     if ($id_count === NULL) {
@@ -115,37 +110,59 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
       $id_count = empty($accounts) ? 1 : count($accounts);
       $form_state->set('id_count', $id_count);
     }
+    $id_prefix = implode('-', ['general', 'accounts']);
+    $wrapper_id = Html::getUniqueId($id_prefix . '-add-more-wrapper');
 
-    //$form['#tree'] = TRUE;
-    $form['general']['google_analytics_account'] = [
+    $form['general'] = [
       '#type' => 'fieldset',
       '#title' => $this->t('Web Property ID(s)'),
-      '#prefix' => '<div id="google_analytics_account-fieldset-wrapper">',
+      '#prefix' => '<div id="'. $wrapper_id .'">',
       '#description' => $this->t('This ID is unique to each site you want to track separately, and is in the form of UA-xxxxx-yy, G-xxxxxxxx, AW-xxxxxxxxx, or DC-xxxxxxxx. To get a Web Property ID, <a href=":analytics">register your site with Google Analytics</a>, or if you already have registered your site, go to your Google Analytics Settings page to see the ID next to every site profile. <a href=":webpropertyid">Find more information in the documentation</a>.', [':analytics' => 'https://marketingplatform.google.com/about/analytics/', ':webpropertyid' => Url::fromUri('https://developers.google.com/analytics/resources/concepts/gaConceptsAccounts', ['fragment' => 'webProperty'])->toString()]),
       '#suffix' => '</div>',
+    ];
+    // Filter order (tabledrag).
+    $form['general']['accounts'] = [
+      '#type' => 'table',
+      '#tabledrag' => [
+        [
+          'action' => 'order',
+          'relationship' => 'sibling',
+          'group' => 'account-order-weight',
+        ],
+      ],
+      '#tree' => TRUE,
     ];
 
     for ($i = 0; $i < $id_count; $i++) {
       // This makes sure removed fields don't reappear in the form.
-      if ($ids_to_remove = $form_state->get('remove_ids')) {
-        if (in_array($i, $ids_to_remove)) {
-          continue;
-        }
+      if ($i === $form_state->get('remove_ids')) {
+        continue;
       }
 
-      $form['general']['google_analytics_account']['gtag_ids']['#tree'] = TRUE;
-      $form['general']['google_analytics_account']['gtag_ids'][$i]['value'] = [
-        '#default_value' => $accounts[$i] ?? '',
+      $form['general']['accounts'][$i]['#attributes']['class'][] = 'draggable';
+      $form['general']['accounts'][$i]['#weight'] = $i;
+      $form['general']['accounts'][$i]['value'] = [
+        '#default_value' => (string)$accounts[$i] ?? '',
         '#maxlength' => 20,
-        '#required' => TRUE,
+        '#required' => ($i === 0),
         '#size' => 20,
         '#type' => 'textfield',
         '#element_validate' => [[get_class($this), 'gtagElementValidate']],
       ];
 
+      $form['general']['accounts'][$i]['weight'] = [
+        '#type' => 'weight',
+        '#title' => $this->t('Weight for @title', ['@title' => (string)$accounts[$i]]),
+        '#title_display' => 'invisible',
+        '#delta' => 50,
+        '#default_value' => $i,
+        '#parents' => ['accounts', $i, 'weight'],
+        '#attributes' => ['class' => ['account-order-weight']],
+      ];
+
       // If there is more than one id, add the remove button.
       if ($id_count > 1) {
-        $form['general']['google_analytics_account']['gtag_ids'][$i]['remove'] = [
+        $form['general']['accounts'][$i]['remove'] = [
           '#type' => 'submit',
           '#name' => 'remove_gtag_ids_'.$i,
           '#value' => $this->t('Remove'),
@@ -153,23 +170,21 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
           '#limit_validation_errors' => [],
           '#ajax' => [
             'callback' => '::gtagFieldCallback',
-            'wrapper' => 'google_analytics_account-fieldset-wrapper',
+            'wrapper' => $wrapper_id,
           ],
         ];
       }
     }
 
-    $form['general']['google_analytics_account']['actions'] = [
-      '#type' => 'actions',
-    ];
-    $form['general']['google_analytics_account']['actions']['add_gtag_id'] = [
+    $form['general']['add_gtag_id'] = [
       '#type' => 'submit',
       '#value' => $this->t('Add another ID'),
-      '#name' => 'add_gtag_id',
+      '#name' => strtr($id_prefix, '-', '_') . '_add_gtag_id',
       '#submit' => ['::addOne'],
       '#ajax' => [
         'callback' => '::gtagFieldCallback',
-        'wrapper' => 'google_analytics_account-fieldset-wrapper',
+        'wrapper' => $wrapper_id,
+        'effect' => 'fade',
       ],
     ];
 
@@ -474,8 +489,8 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
     ];
     $form['tracking']['privacy']['google_analytics_tracker_anonymizeip'] = [
       '#type' => 'checkbox',
-      '#title' => $this->t('Anonymize visitors IP address'),
-      '#description' => $this->t('Tell Google Analytics to anonymize the information sent by the tracker objects by removing the last octet of the IP address prior to its storage. Note that this will slightly reduce the accuracy of geographic reporting. In some countries it is not allowed to collect personally identifying information for privacy reasons and this setting may help you to comply with the local laws.'),
+      '#title' => $this->t('Anonymize visitors IP address (UA Accounts only)'),
+      '#description' => $this->t('Tell Google Analytics to anonymize the information sent by the tracker objects by removing the last octet of the IP address prior to its storage. Note that this will slightly reduce the accuracy of geographic reporting. In some countries it is not allowed to collect personally identifying information for privacy reasons and this setting may help you to comply with the local laws. This option does nothing in GA4 as it Anonymizes IPs by default and not be configured.'),
       '#default_value' => $config->get('privacy.anonymizeip'),
     ];
 
@@ -766,12 +781,8 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
     $config = $this->config('google_analytics.settings');
 
     // Convert gtag ID values to accounts string
-    $gtag_values = $form_state->getValue('gtag_ids');
-    $accounts_array = [];
-    foreach($gtag_values as $gtag) {
-      $accounts_array[] = $gtag['value'];
-    }
-    $accounts = implode(',', $accounts_array);
+    $accounts = $form_state->getValue('accounts');
+    $accounts = trim(implode(',', array_column($accounts, 'value')), ',');
 
     $config
       ->set('account', $accounts)
@@ -815,6 +826,9 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
 
   public static function gtagElementValidate(&$element, FormStateInterface $form_state) {
     // Get and Validate Analytics Account IDs
+    if (empty($element['#value'])) {
+      return;
+    }
     $gtag_id = isset($element['#value']) ? $element['#value'] : $element['#default_value'];
     $gtag_id = trim($gtag_id);
     $gtag_id = str_replace(['–', '—', '−'], '-', $gtag_id);
@@ -1147,7 +1161,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
    * Selects and returns the fieldset with the names in it.
    */
   public function gtagFieldCallback(array &$form, FormStateInterface $form_state) {
-    return $form['general']['google_analytics_account'];
+    return $form['general'];
   }
 
   /**
@@ -1172,10 +1186,8 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
    */
   public function removeCallback(array &$form, FormStateInterface $form_state) {
     $removed_trigger = $form_state->getTriggeringElement();
-    $gtag_id = substr($removed_trigger['#name'], strlen('remove_gtags_ids'));
-    $removed_ids = $form_state->get('remove_ids') ?? [];
-    $removed_ids[] = $gtag_id;
-    $form_state->set('remove_ids', $removed_ids);
+    $gtag_id = (int)substr($removed_trigger['#name'], strlen('remove_gtags_ids'));
+    $form_state->set('remove_ids', $gtag_id);
 
     // Since our buildForm() method relies on the value of 'num_names' to
     // generate 'name' form elements, we have to tell the form to rebuild. If we

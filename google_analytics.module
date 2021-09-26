@@ -163,23 +163,33 @@ function google_analytics_page_attachments(array &$page) {
     if (!empty($codesnippet_before)) {
       $script .= $codesnippet_before;
     }
-    $ga_config = new GoogleAnalyticsConfigEvent($javascript);
 
-    // Get the event_dispatcher service and dispatch the event.
-    $event_dispatcher = \Drupal::service('event_dispatcher');
-    $event_dispatcher->dispatch(GoogleAnalyticsEvents::ADD_CONFIG, $ga_config);
+    // Create a config for each account.
+    foreach($ga_accounts->getAccounts() as $account) {
+      $ga_config = new GoogleAnalyticsConfigEvent($javascript, $account);
 
-    // Json::encode() cannot convert custom URLs properly.
-    $config_array = $ga_config->getConfig();
-    $path = '';
-    if (isset($config_array['page_path'])) {
-      $path = $config_array['page_path'];
-      $config_array['page_path'] = 'PLACEHOLDER_URL_CUSTOM';
+      // Get the event_dispatcher service and dispatch the event.
+      $event_dispatcher = \Drupal::service('event_dispatcher');
+      $event_dispatcher->dispatch(GoogleAnalyticsEvents::ADD_CONFIG, $ga_config);
+
+      // Json::encode() cannot convert custom URLs properly.
+      $config_array = $ga_config->getConfig();
+      $path = '';
+      $path_type = '';
+      if (isset($config_array['page'])) {
+        $path_type = substr($config_array['page_placeholder'], strlen('PLACEHOLDER_'));
+        $path = $config_array['page'];
+        $config_array[$path_type] = $config_array['page_placeholder'];
+        unset($config_array['page']);
+        unset($config_array['page_placeholder']);
+      }
+      $arguments_json = Json::encode($config_array);
+      $arguments_json = str_replace('"PLACEHOLDER_'.$path_type.'"', $path, $arguments_json);
+
+
+      $script .= 'gtag("config", ' . Json::encode((string)$account) . ', ' . $arguments_json . ');';
     }
-    $arguments_json = Json::encode($config_array);
-    $arguments_json = str_replace('"PLACEHOLDER_URL_CUSTOM"', $path, $arguments_json);
 
-    $script .= 'gtag("config", ' . Json::encode($default_id) . ', ' . $arguments_json . ');';
 
     $ga_events = new GoogleAnalyticsEventsEvent($javascript);
 
@@ -196,11 +206,6 @@ function google_analytics_page_attachments(array &$page) {
     }
     if (!empty($codesnippet_after)) {
       $script .= $codesnippet_after;
-    }
-
-    // Add additional Accounts to gTag.
-    foreach ($ga_accounts->getAdditionalAccounts() as $additionalAccount) {
-      $script .= 'gtag("config", ' . Json::encode($additionalAccount) . ');';
     }
 
     // Prepend tracking library directly before script code.

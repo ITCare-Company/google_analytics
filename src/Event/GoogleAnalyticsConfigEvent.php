@@ -2,6 +2,8 @@
 
 namespace Drupal\google_analytics\Event;
 
+use Drupal\google_analytics\GaAccount;
+use Drupal\google_analytics\Helpers\GoogleAnalyticsAccounts;
 use Symfony\Component\EventDispatcher\Event;
 use Drupal\google_analytics\GaJavascriptObject;
 
@@ -25,13 +27,21 @@ class GoogleAnalyticsConfigEvent extends Event {
   protected $config;
 
   /**
+   * Array representing the config to pass to GA.
+   *
+   * @var \Drupal\google_analytics\GaAccount
+   */
+  protected $gaAccount;
+
+  /**
    * GoogleAnalyticsConfigEvent constructor.
    *
    * @param \Drupal\google_analytics\GaJavascriptObject $javascript
    *   The GA Javascript Object.
    */
-  public function __construct(GaJavascriptObject $javascript) {
+  public function __construct(GaJavascriptObject $javascript, GaAccount $ga_account) {
     $this->javascript = $javascript;
+    $this->gaAccount = $ga_account;
   }
 
   /**
@@ -42,6 +52,15 @@ class GoogleAnalyticsConfigEvent extends Event {
    */
   public function getJavascript() {
     return $this->javascript;
+  }
+
+  /**
+   * Get the specific Google Analytics account associated with this config.
+   *
+   * @return \Drupal\google_analytics\Helpers\GoogleAnalyticsAccounts
+   */
+  public function getGaAccount() {
+    return $this->gaAccount;
   }
 
   /**

@@ -7,6 +7,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\PrivateKey;
 use Drupal\Core\Site\Settings;
 use Drupal\google_analytics\Constants\GoogleAnalyticsPatterns;
+use Drupal\google_analytics\GaAccount;
 
 class GoogleAnalyticsAccounts {
 
@@ -41,14 +42,17 @@ class GoogleAnalyticsAccounts {
    */
   public function __construct(ConfigFactoryInterface $config_factory, PrivateKey $private_key) {
     $this->config = $config_factory->get('google_analytics.settings');
-    $accounts = $this->config->get('account');
 
+    $accounts = $this->config->get('account');
     // Create the accounts array from either a single gtag id or multiple ones.
     if (strpos($accounts, ',') === FALSE) {
-      $this->accounts[] = $accounts;
+      $this->accounts[] = new GaAccount($accounts);
     }
     else {
-      $this->accounts = explode(',', $accounts);
+      $accounts_array = explode(',', $accounts);
+      foreach($accounts_array as $account) {
+        $this->accounts[] = new GaAccount($account);
+      }
     }
 
     $this->privateKey = $private_key->get();
@@ -81,22 +85,6 @@ class GoogleAnalyticsAccounts {
     foreach ($this->accounts as $account) {
       if (preg_match(GoogleAnalyticsPatterns::GOOGLE_ANALYTICS_TRACKING_MATCH, $account)) {
         return $account;
-      }
-    }
-    return FALSE;
-  }
-
-  /**
-   * Detects if there is a universal analytics account.
-   *
-   * If any account is UA, then this will return true.
-   *
-   * @return bool
-   */
-  public function isUniversalAnalyticsAccount() {
-    foreach ($this->accounts as $account) {
-      if (preg_match(GoogleAnalyticsPatterns::GOOGLE_ANALYTICS_UA_MATCH, $account)) {
-        return TRUE;
       }
     }
     return FALSE;

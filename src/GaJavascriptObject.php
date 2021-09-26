@@ -113,7 +113,7 @@ class GaJavascriptObject implements GaJavascriptInterface {
    * {@inheritdoc}
    */
   public function setConfig($measurement_id, array $config) {
-    $this->config[$measurement_id] = $config;
+    $this->config[(string)$measurement_id] = $config;
   }
 
   /**

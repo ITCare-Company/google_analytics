@@ -42,6 +42,6 @@ services:
       - { name: 'event_subscriber' }
   google_analytics.config.custom_config:
     class: '\Drupal\google_analytics\EventSubscriber\GoogleAnalyticsConfig\CustomConfig'
-    arguments: [ '@config.factory', '@google_analytics.accounts', '@current_user', '@request_stack', '@token' ]
+    arguments: [ '@config.factory', '@current_user', '@request_stack', '@token' ]
     tags:
       - { name: 'event_subscriber' }

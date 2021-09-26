@@ -23,18 +23,18 @@ class DefaultConfig implements EventSubscriberInterface {
   protected $config;
 
   /**
-   * Google Analytics Accounts Service
-   *
-   * @var \Drupal\google_analytics\Helpers\GoogleAnalyticsAccounts
-   */
-  protected $gaAccounts;
-
-  /**
    * Current Drupal User Account.
    *
    * @var \Drupal\Core\Session\AccountProxyInterface
    */
   protected $currentAccount;
+
+  /**
+   * The Global Google Analytics Accounts Service
+   *
+   * @var \Drupal\google_analytics\Helpers\GoogleAnalyticsAccounts
+   */
+  protected $gaAccounts;
 
   /**
    * DrupalMessage constructor.
@@ -66,6 +66,8 @@ class DefaultConfig implements EventSubscriberInterface {
    */
   public function onAddConfig(GoogleAnalyticsConfigEvent $event) {
     $javascript = $event->getJavascript();
+    $ga_account = $event->getGaAccount();
+
     // Custom Code Snippets that aren't created programmatically.
     $codesnippet_parameters = $this->config->get('codesnippet.create') ?? [];
 
@@ -100,23 +102,25 @@ class DefaultConfig implements EventSubscriberInterface {
     }
 
     // Eliminate for GA 4.x
-    if ($this->config->get('privacy.anonymizeip')) {
+    if ($this->config->get('privacy.anonymizeip') && $ga_account->isUniversalAnalyticsAccount()) {
       $arguments['anonymize_ip'] = TRUE;
     }
 
     $page_path = new PagePathEvent();
-
     // Get the event_dispatcher service and dispatch the event.
     $event_dispatcher = \Drupal::service('event_dispatcher');
     $event_dispatcher->dispatch(GoogleAnalyticsEvents::PAGE_PATH, $page_path);
 
+    $path_type = $ga_account->isUniversalAnalyticsAccount() ? 'page_path' : 'page_location';
+    $arguments['page_placeholder'] = 'PLACEHOLDER_' . $path_type;
+
     // TODO: Rewrite this into the PagePath event that executes first.
     if ($this->config->get('track.urlfragments')) {
-      $arguments['page_path'] = 'location.pathname + location.search + location.hash';
+      $arguments['page'] = 'location.pathname + location.search + location.hash';
     }
 
     if (!empty($page_path->getPagePath())) {
-      $arguments['page_path'] = $page_path->getPagePath();
+      $arguments['page'] = $page_path->getPagePath();
     }
 
     // Add enhanced link attribution after 'create', but before 'pageview' send.

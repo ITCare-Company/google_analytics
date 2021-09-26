@@ -26,13 +26,6 @@ class CustomConfig implements EventSubscriberInterface {
   protected $config;
 
   /**
-   * Google Analytics Accounts Service
-   *
-   * @var \Drupal\google_analytics\Helpers\GoogleAnalyticsAccounts
-   */
-  protected $gaAccounts;
-
-  /**
    * Current Drupal User Account.
    *
    * @var \Drupal\Core\Session\AccountProxyInterface
@@ -68,8 +61,8 @@ class CustomConfig implements EventSubscriberInterface {
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   Config Factory for Google Analytics Settings.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, GoogleAnalyticsAccounts $ga_accounts, AccountProxyInterface $account, RequestStack $request, Token $token) {    $this->config = $config_factory->get('google_analytics.settings');
-    $this->gaAccounts = $ga_accounts;
+  public function __construct(ConfigFactoryInterface $config_factory, AccountProxyInterface $account, RequestStack $request, Token $token) {
+    $this->config = $config_factory->get('google_analytics.settings');
     $this->currentAccount = $account;
     $this->request = $request->getCurrentRequest();
     $this->token = $token;
@@ -100,7 +93,11 @@ class CustomConfig implements EventSubscriberInterface {
     if (empty($this->custom_map)) {
       return;
     }
-    $event->addConfig('custom_map', $this->custom_map['custom_map']);
+
+    // Only populate the config on UA accounts.
+    if ($event->getGaAccount()->isUniversalAnalyticsAccount()) {
+      $event->addConfig('custom_map', $this->custom_map['custom_map']);
+    }
   }
 
   public function onAddEvent(GoogleAnalyticsEventsEvent $event) {
