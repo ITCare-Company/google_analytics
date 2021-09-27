@@ -97,7 +97,7 @@ class DefaultConfig implements EventSubscriberInterface {
     }
 
     // Track logged in users across all devices.
-    if ($this->config->get('track.userid') && $this->currentAccount->isAuthenticated()) {
+    if ($this->currentAccount->isAuthenticated()) {
       $arguments['user_id'] = $this->gaAccounts->getUserIdHash($this->currentAccount->id());
     }
 

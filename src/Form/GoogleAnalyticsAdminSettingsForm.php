@@ -356,12 +356,6 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
       ],
       '#default_value' => !empty($visibility_user_account_mode) ? $visibility_user_account_mode : 0,
     ];
-    $form['tracking']['user_visibility_settings']['google_analytics_trackuserid'] = [
-      '#type' => 'checkbox',
-      '#title' => $this->t('Track User ID'),
-      '#default_value' => $config->get('track.userid'),
-      '#description' => $this->t('User ID enables the analysis of groups of sessions, across devices, using a unique, persistent, and non-personally identifiable ID string representing a user. <a href=":url">Learn more about the benefits of using User ID</a>.', [':url' => 'https://support.google.com/analytics/answer/3123663']),
-    ];
 
     // Link specific configurations.
     $form['tracking']['linktracking'] = [

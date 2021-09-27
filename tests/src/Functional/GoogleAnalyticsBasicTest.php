@@ -234,16 +234,6 @@ class GoogleAnalyticsBasicTest extends BrowserTestBase {
     $this->drupalGet('');
     $this->assertSession()->responseNotContains('"link_attribution":true');
 
-    // Test if tracking of User ID is enabled.
-    $this->config('google_analytics.settings')->set('track.userid', 1)->save();
-    $this->drupalGet('');
-    $this->assertSession()->responseContains('"user_id":"');
-
-    // Test if tracking of User ID is disabled.
-    $this->config('google_analytics.settings')->set('track.userid', 0)->save();
-    $this->drupalGet('');
-    $this->assertSession()->responseNotContains('"user_id":"');
-
     // Test if track display features is disabled.
     $this->config('google_analytics.settings')->set('track.displayfeatures', 0)->save();
     $this->drupalGet('');
