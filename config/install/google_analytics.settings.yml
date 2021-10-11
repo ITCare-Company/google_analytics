@@ -25,8 +25,7 @@ track:
 privacy:
   anonymizeip: true
 custom:
-  dimension: {  }
-  metric: {  }
+  parameters: {  }
 codesnippet:
   create: {  }
   before: ''

@@ -488,134 +488,147 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
       '#default_value' => $config->get('privacy.anonymizeip'),
     ];
 
-    // Custom Dimensions.
-    $form['google_analytics_custom_dimension'] = [
-      '#description' => $this->t('You can set values for Google Analytics <a href=":custom_var_documentation">Custom Dimensions</a> here. You must have already configured your custom dimensions in the <a href=":setup_documentation">Google Analytics Management Interface</a>. You may use tokens. Global and user tokens are always available; on node pages, node tokens are also available. A dimension <em>value</em> is allowed to have a maximum length of 150 bytes. Expect longer values to get trimmed.', [':custom_var_documentation' => 'https://developers.google.com/analytics/devguides/collection/analyticsjs/custom-dims-mets', ':setup_documentation' => 'https://support.google.com/analytics/answer/2709829']),
-      '#title' => $this->t('Custom dimensions'),
-      '#tree' => TRUE,
+    // If the param_count is null, we're loading for the first time, load in IDS.
+    $parameters = $this->getCustomParameters();
+    if ($form_state->get('param_count') === NULL) {
+      $form_state->set('param_count', count($parameters));
+    }
+    $param_id_prefix = implode('-', ['tracking', 'parameters']);
+    $param_wrapper_id = Html::getUniqueId($param_id_prefix . '-add-more-wrapper');
+
+    $form['tracking']['parameters'] = [
       '#type' => 'details',
+      '#title' => $this->t('Dimensions and Metrics'),
+      '#group' => 'tracking_scope',
     ];
 
-    $form['google_analytics_custom_dimension']['indexes'] = [
+    $form['tracking']['parameters']['indexes'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Custom dimensions and metrics'),
+      '#description' => $this->t('You can set values for Google Analytics <a href=":custom_var_documentation">Custom Dimensions</a> here. You must have already configured your custom dimensions in the <a href=":setup_documentation">Google Analytics Management Interface</a>. You may use tokens. Global and user tokens are always available; on node pages, node tokens are also available. A dimension <em>value</em> is allowed to have a maximum length of 150 bytes. Expect longer values to get trimmed.', [':custom_var_documentation' => 'https://developers.google.com/analytics/devguides/collection/analyticsjs/custom-dims-mets', ':setup_documentation' => 'https://support.google.com/analytics/answer/2709829']),
+      '#prefix' => '<div id="'. $param_wrapper_id .'">',
+      '#suffix' => '</div>',
+    ];
+
+    $form['tracking']['parameters']['indexes']['custom_parameters'] = [
       '#type' => 'table',
       '#header' => [
         ['data' => $this->t('Index')],
+        ['data' => $this->t('Type')],
         ['data' => $this->t('Name')],
         ['data' => $this->t('Value')],
+        ['data' => $this->t('Operations')],
       ],
+      '#tree' => TRUE,
     ];
 
-    $google_analytics_custom_dimension = $config->get('custom.dimension');
+    for ($i = 0; $i < $form_state->get('param_count'); $i++) {
+      // This makes sure removed fields don't reappear in the form.
+      $remove_ids = $form_state->get('remove_parameter_ids');
+      if (isset($remove_ids[$i])) {
+        continue;
+      }
 
-    // Standard Google Analytics accounts support up to 20 custom dimensions,
-    // premium accounts support up to 200 custom dimensions.
-    // TODO: Make the custom dimensions auto incrementable.
-    //$limit = ($config->get('premium')) ? 200 : 20;
-    $limit = 20;
-    for ($i = 1; $i <= $limit; $i++) {
-      $form['google_analytics_custom_dimension']['indexes'][$i]['index'] = [
-        '#default_value' => $i,
-        '#description' => $this->t('Index number'),
-        '#disabled' => TRUE,
-        '#size' => ($limit == 200) ? 3 : 2,
+      $form['tracking']['parameters']['indexes']['custom_parameters'][$i]['#attributes']['class'][] = 'draggable';
+      $form['tracking']['parameters']['indexes']['custom_parameters'][$i]['#weight'] = $i;
+
+      $form['tracking']['parameters']['indexes']['custom_parameters'][$i]['index'] = [
+        '#default_value' => $parameters[$i]['index'] ?? '',
+        '#description' => $this->t('Index (UA Only)'),
+        '#size' => 12,
         '#title' => $this->t('Custom dimension index #@index', ['@index' => $i]),
         '#title_display' => 'invisible',
         '#type' => 'textfield',
+        '#prefix' => '<div id="edit-index-'.$i.'">',
+        '#suffix' => '</div>',
+        '#attributes' => [
+          'readonly' => 'readonly',
+          'tabindex' => '-1'
+        ],
       ];
-      $form['google_analytics_custom_dimension']['indexes'][$i]['name'] = [
-        '#default_value' => isset($google_analytics_custom_dimension[$i]['name']) ? $google_analytics_custom_dimension[$i]['name'] : '',
-        '#description' => $this->t('The custom dimension name.'),
+
+      // GA doesn't use a '0' in its metric.
+      $index_count = $i+1;
+
+      $form['tracking']['parameters']['indexes']['custom_parameters'][$i]['type'] = [
+        '#type' => 'select',
+        '#default_value' => isset($parameters[$i]['type']) ? $parameters[$i]['type'] . '-' . $index_count : '-',
+        '#disabled' => isset($parameters[$i]['index']),
+        '#options' => [
+          '-'. $index_count => '',
+          'dimension-'. $index_count => $this->t('Dimension'),
+          'metric-'. $index_count => $this->t('Metric'),
+        ],
+        '#title' => $this->t('Parameter Type'),
+        '#title_display' => 'invisible',
+        '#description' => $this->t('Parameter Type'),
+        '#ajax' => array(
+          'callback' => '::parameterIndexCallback',
+          'disable-refocus' => FALSE, // Or TRUE to prevent re-focusing on the triggering element.
+          'event' => 'change',
+          'wrapper' => $param_wrapper_id, // This element is updated with this AJAX callback.
+          'progress' => [
+            'type' => 'throbber',
+            'message' => $this->t('Verifying entry...'),
+          ],
+        ),
+      ];
+      $form['tracking']['parameters']['indexes']['custom_parameters'][$i]['name'] = [
+        '#default_value' => $parameters[$i]['name'] ?? '',
+        '#description' => $this->t('The custom parameter name.'),
         '#maxlength' => 255,
-        '#title' => $this->t('Custom dimension name #@index', ['@index' => $i]),
+        '#title' => $this->t('Custom parameter name #@index', ['@index' => $parameters[$i]['index'] ?? $i]),
         '#title_display' => 'invisible',
         '#type' => 'textfield',
       ];
-      $form['google_analytics_custom_dimension']['indexes'][$i]['value'] = [
-        '#default_value' => isset($google_analytics_custom_dimension[$i]['value']) ? $google_analytics_custom_dimension[$i]['value'] : '',
-        '#description' => $this->t('The custom dimension value.'),
+      $form['tracking']['parameters']['indexes']['custom_parameters'][$i]['value'] = [
+        '#default_value' => $parameters[$i]['value'] ?? '',
+        '#description' => $this->t('The custom parameter value.'),
         '#maxlength' => 255,
-        '#title' => $this->t('Custom dimension value #@index', ['@index' => $i]),
+        '#title' => $this->t('Custom parameter value #@index', ['@index' => $parameters[$i]['index'] ?? $i]),
         '#title_display' => 'invisible',
         '#type' => 'textfield',
         '#element_validate' => [[get_class($this), 'tokenElementValidate']],
         '#token_types' => ['node'],
       ];
+
+      // If there is more than one id, add the remove button.
+      if ($form_state->get('param_count') > 1) {
+        $form['tracking']['parameters']['indexes']['custom_parameters'][$i]['remove'] = [
+          '#type' => 'submit',
+          '#name' => 'remove_parameter_ids_'.$i,
+          '#value' => $this->t('Remove'),
+          '#submit' => ['::removeParametersCallback'],
+          '#limit_validation_errors' => [],
+          '#ajax' => [
+            'callback' => '::parametersFieldCallback',
+            'wrapper' => $param_wrapper_id,
+          ],
+        ];
+      }
+
       if ($this->moduleHandler->moduleExists('token')) {
-        $form['google_analytics_custom_dimension']['indexes'][$i]['value']['#element_validate'][] = 'token_element_validate';
+        $form['tracking']['parameters']['indexes']['custom_parameters'][$i]['value']['#element_validate'][] = 'token_element_validate';
       }
     }
+    $form['tracking']['parameters']['indexes']['add_parameter'] = [
+      '#type' => 'submit',
+      '#value' => $this->t('Add another Parameter'),
+      '#name' => strtr($param_id_prefix, '-', '_') . '_add_parameter_id',
+      '#submit' => ['::addParameter'],
+      '#ajax' => [
+        'callback' => '::parametersFieldCallback',
+        'wrapper' => $param_wrapper_id,
+        'effect' => 'fade',
+      ],
+    ];
 
-    $form['google_analytics_custom_dimension']['google_analytics_description'] = [
+    $form['tracking']['parameters']['google_analytics_description'] = [
       '#type' => 'item',
       '#description' => $this->t('You can supplement Google Analytics\' basic IP address tracking of visitors by segmenting users based on custom dimensions. Section 7 of the <a href=":ga_tos">Google Analytics terms of service</a> requires that You will not (and will not allow any third party to) use the Service to track, collect or upload any data that personally identifies an individual (such as a name, userid, email address or billing information), or other data which can be reasonably linked to such information by Google. You will have and abide by an appropriate Privacy Policy and will comply with all applicable laws and regulations relating to the collection of information from Visitors. You must post a Privacy Policy and that Privacy Policy must provide notice of Your use of cookies that are used to collect traffic data, and You must not circumvent any privacy features (e.g., an opt-out) that are part of the Service.', [':ga_tos' => 'https://www.google.com/analytics/terms/gb.html']),
     ];
     if ($this->moduleHandler->moduleExists('token')) {
-      $form['google_analytics_custom_dimension']['google_analytics_token_tree'] = [
-        '#theme' => 'token_tree_link',
-        '#token_types' => ['node'],
-      ];
-    }
-
-    // Custom Metrics.
-    $form['google_analytics_custom_metric'] = [
-      '#description' => $this->t('You can add Google Analytics <a href=":custom_var_documentation">Custom Metrics</a> here. You must have already configured your custom metrics in the <a href=":setup_documentation">Google Analytics Management Interface</a>. You may use tokens. Global and user tokens are always available; on node pages, node tokens are also available.', [':custom_var_documentation' => 'https://developers.google.com/analytics/devguides/collection/analyticsjs/custom-dims-mets', ':setup_documentation' => 'https://support.google.com/analytics/answer/2709829']),
-      '#title' => $this->t('Custom metrics'),
-      '#tree' => TRUE,
-      '#type' => 'details',
-    ];
-
-    $form['google_analytics_custom_metric']['indexes'] = [
-      '#type' => 'table',
-      '#header' => [
-        ['data' => $this->t('Index')],
-        ['data' => $this->t('Name')],
-        ['data' => $this->t('Value')],
-      ],
-    ];
-
-    $google_analytics_custom_metric = $config->get('custom.metric');
-
-    // Standard Google Analytics accounts support up to 20 custom metrics,
-    // premium accounts support up to 200 custom metrics.
-    for ($i = 1; $i <= $limit; $i++) {
-      $form['google_analytics_custom_metric']['indexes'][$i]['index'] = [
-        '#default_value' => $i,
-        '#description' => $this->t('Index number'),
-        '#disabled' => TRUE,
-        '#size' => ($limit == 200) ? 3 : 2,
-        '#title' => $this->t('Custom metric index #@index', ['@index' => $i]),
-        '#title_display' => 'invisible',
-        '#type' => 'textfield',
-      ];
-      $form['google_analytics_custom_metric']['indexes'][$i]['name'] = [
-        '#default_value' => isset($google_analytics_custom_metric[$i]['name']) ? $google_analytics_custom_metric[$i]['name'] : '',
-        '#description' => $this->t('The custom metric name.'),
-        '#maxlength' => 255,
-        '#title' => $this->t('Custom metric name #@index', ['@index' => $i]),
-        '#title_display' => 'invisible',
-        '#type' => 'textfield',
-      ];
-      $form['google_analytics_custom_metric']['indexes'][$i]['value'] = [
-        '#default_value' => isset($google_analytics_custom_metric[$i]['value']) ? $google_analytics_custom_metric[$i]['value'] : '',
-        '#description' => $this->t('The custom metric value.'),
-        '#maxlength' => 255,
-        '#title' => $this->t('Custom metric value #@index', ['@index' => $i]),
-        '#title_display' => 'invisible',
-        '#type' => 'textfield',
-        '#element_validate' => [[get_class($this), 'tokenElementValidate']],
-        '#token_types' => ['node'],
-      ];
-      if ($this->moduleHandler->moduleExists('token')) {
-        $form['google_analytics_custom_metric']['indexes'][$i]['value']['#element_validate'][] = 'token_element_validate';
-      }
-    }
-
-    $form['google_analytics_custom_metric']['google_analytics_description'] = [
-      '#type' => 'item',
-      '#description' => $this->t('You can supplement Google Analytics\' basic IP address tracking of visitors by segmenting users based on custom metrics. Section 7 of the <a href=":ga_tos">Google Analytics terms of service</a> requires that You will not (and will not allow any third party to) use the Service to track, collect or upload any data that personally identifies an individual (such as a name, userid, email address or billing information), or other data which can be reasonably linked to such information by Google. You will have and abide by an appropriate Privacy Policy and will comply with all applicable laws and regulations relating to the collection of information from Visitors. You must post a Privacy Policy and that Privacy Policy must provide notice of Your use of cookies that are used to collect traffic data, and You must not circumvent any privacy features (e.g., an opt-out) that are part of the Service.', [':ga_tos' => 'https://www.google.com/analytics/terms/gb.html']),
-    ];
-    if ($this->moduleHandler->moduleExists('token')) {
-      $form['google_analytics_custom_metric']['google_analytics_token_tree'] = [
+      $form['tracking']['parameters']['google_analytics_token_tree'] = [
         '#theme' => 'token_tree_link',
         '#token_types' => ['node'],
       ];
@@ -694,24 +707,21 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
   public function validateForm(array &$form, FormStateInterface $form_state) {
     parent::validateForm($form, $form_state);
 
-    // Trim custom dimensions and metrics.
-    foreach ($form_state->getValue(['google_analytics_custom_dimension', 'indexes']) as $dimension) {
-      $form_state->setValue(['google_analytics_custom_dimension', 'indexes', $dimension['index'], 'value'], trim($dimension['value']));
-      // Remove empty values from the array.
-      if (!mb_strlen($form_state->getValue(['google_analytics_custom_dimension', 'indexes', $dimension['index'], 'value']))) {
-        $form_state->unsetValue(['google_analytics_custom_dimension', 'indexes', $dimension['index']]);
+    // Trim custom dimensions and metrics, ensure indexes match row counts.
+    $custom_parameters = [];
+    if (!empty($form_state->getValue('custom_parameters'))) {
+      foreach ($form_state->getValue('custom_parameters') as $row => $parameter) {
+        if (!mb_strlen($parameter['value']) || !mb_strlen($parameter['name']) || empty($parameter['index'])) {
+          continue;
+        }
+        [$type] = explode('-', $parameter['type']);
+        $custom_parameters[$row]['index'] = $parameter['index'];
+        $custom_parameters[$row]['type'] = $type;
+        $custom_parameters[$row]['name'] = trim($parameter['name']);
+        $custom_parameters[$row]['value'] = trim($parameter['value']);
       }
+      $form_state->setValue('custom_parameters', $custom_parameters);
     }
-    $form_state->setValue('google_analytics_custom_dimension', $form_state->getValue(['google_analytics_custom_dimension', 'indexes']));
-
-    foreach ($form_state->getValue(['google_analytics_custom_metric', 'indexes']) as $metric) {
-      $form_state->setValue(['google_analytics_custom_metric', 'indexes', $metric['index'], 'value'], trim($metric['value']));
-      // Remove empty values from the array.
-      if (!mb_strlen($form_state->getValue(['google_analytics_custom_metric', 'indexes', $metric['index'], 'value']))) {
-        $form_state->unsetValue(['google_analytics_custom_metric', 'indexes', $metric['index']]);
-      }
-    }
-    $form_state->setValue('google_analytics_custom_metric', $form_state->getValue(['google_analytics_custom_metric', 'indexes']));
 
     // Trim some text values.
     $form_state->setValue('google_analytics_visibility_request_path_pages', trim($form_state->getValue('google_analytics_visibility_request_path_pages')));
@@ -778,6 +788,17 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
     $accounts = $form_state->getValue('accounts');
     $accounts = trim(implode(',', array_column($accounts, 'value')), ',');
 
+    // Convert custom parameter rows into GA indexes.
+    $custom_parameters = [];
+    if (!empty($form_state->getValue('custom_parameters'))) {
+      foreach ($form_state->getValue('custom_parameters') as $row) {
+        $custom_parameters[$row['index']]['type'] = $row['type'];
+        $custom_parameters[$row['index']]['name'] = $row['name'];
+        $custom_parameters[$row['index']]['value'] = $row['value'];
+      }
+      ksort($custom_parameters);
+    }
+
     $config
       ->set('account', $accounts)
       ->set('ua_legacy', $form_state->getValue('google_analytics_legacy'))
@@ -785,15 +806,13 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
       ->set('codesnippet.create', $form_state->getValue('google_analytics_codesnippet_create'))
       ->set('codesnippet.before', $form_state->getValue('google_analytics_codesnippet_before'))
       ->set('codesnippet.after', $form_state->getValue('google_analytics_codesnippet_after'))
-      ->set('custom.dimension', $form_state->getValue('google_analytics_custom_dimension'))
-      ->set('custom.metric', $form_state->getValue('google_analytics_custom_metric'))
+      ->set('custom.parameters', $custom_parameters)
       ->set('domain_mode', $form_state->getValue('google_analytics_domain_mode'))
       ->set('track.files', $form_state->getValue('google_analytics_trackfiles'))
       ->set('track.files_extensions', $form_state->getValue('google_analytics_trackfiles_extensions'))
       ->set('track.colorbox', $form_state->getValue('google_analytics_trackcolorbox'))
       ->set('track.linkid', $form_state->getValue('google_analytics_tracklinkid'))
       ->set('track.urlfragments', $form_state->getValue('google_analytics_trackurlfragments'))
-      ->set('track.userid', $form_state->getValue('google_analytics_trackuserid'))
       ->set('track.mailto', $form_state->getValue('google_analytics_trackmailto'))
       ->set('track.tel', $form_state->getValue('google_analytics_tracktel'))
       ->set('track.messages', $form_state->getValue('google_analytics_trackmessages'))
@@ -1150,12 +1169,21 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
   }
 
   /**
-   * Callback for both ajax-enabled buttons.
+   * Callback for both ajax account buttons.
    *
    * Selects and returns the fieldset with the names in it.
    */
   public function gtagFieldCallback(array &$form, FormStateInterface $form_state) {
     return $form['general'];
+  }
+
+  /**
+   * Callback for both ajax custom parameters buttons.
+   *
+   * Selects and returns the fieldset with the names in it.
+   */
+  public function parametersFieldCallback(array &$form, FormStateInterface $form_state) {
+    return $form['tracking']['parameters']['indexes'];
   }
 
   /**
@@ -1167,6 +1195,21 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
     $id_field = $form_state->get('id_count');
     $add_button = $id_field + 1;
     $form_state->set('id_count', $add_button);
+    // Since our buildForm() method relies on the value of 'num_names' to
+    // generate 'gtag_id' form elements, we have to tell the form to rebuild. If we
+    // don't do this, the form builder will not call buildForm().
+    $form_state->setRebuild();
+  }
+
+  /**
+   * Submit handler for the "Add Parameter" button.
+   *
+   * Increments the max counter and causes a rebuild.
+   */
+  public function addParameter(array &$form, FormStateInterface $form_state) {
+    $id_field = $form_state->get('param_count');
+    $add_button = $id_field + 1;
+    $form_state->set('param_count', $add_button);
     // Since our buildForm() method relies on the value of 'num_names' to
     // generate 'gtag_id' form elements, we have to tell the form to rebuild. If we
     // don't do this, the form builder will not call buildForm().
@@ -1187,6 +1230,76 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
     // generate 'name' form elements, we have to tell the form to rebuild. If we
     // don't do this, the form builder will not call buildForm().
     $form_state->setRebuild();
+  }
+
+  /**
+   * Submit handler for the "remove parameter" button.
+   *
+   * Decrements the max counter and causes a form rebuild.
+   */
+  public function removeParametersCallback(array &$form, FormStateInterface $form_state) {
+    $removed_trigger = $form_state->getTriggeringElement();
+    $parameter_id = (int)substr($removed_trigger['#name'], strlen('remove_parameter_ids_'));
+    $remove_ids = $form_state->get('remove_parameter_ids');
+    $remove_ids[$parameter_id] = TRUE;
+    $form_state->set('remove_parameter_ids', $remove_ids);
+
+    // Since our buildForm() method relies on the value of 'num_names' to
+    // generate 'name' form elements, we have to tell the form to rebuild. If we
+    // don't do this, the form builder will not call buildForm().
+    $form_state->setRebuild();
+  }
+
+  /**
+   * Ajax callback to change the index ID depending on Type
+   */
+  public function parameterIndexCallback(array &$form, FormStateInterface $form_state) {
+    // Prepare our textfield. check if the example select field has a selected option.
+    if ($selectedValue = $form_state->getTriggeringElement()) {
+      // Get the index of the selected option.
+      // If the value is numeric it means the 'null' option was selected.
+      [$value, $current_row] = explode('-', $selectedValue['#value']);
+      if (!empty($value)) {
+        // Metric/Dimensions share index numbers. Re-order them
+        $parameter_count = ['dimension' => 0, 'metric' => 0];
+        $parameters = $form_state->getValue('custom_parameters');
+        foreach ($parameters as $row => $parameter) {
+          [$val, $ind] = explode('-', $parameter['type']);
+          $parameter_count[$val]++;
+          if($row == $current_row) {
+            $form['tracking']['parameters']['indexes']['custom_parameters'][$row]['index']['#value'] = $value.$parameter_count[$value];
+          }
+          else {
+            // Reset the counter for any other rows
+            $form['tracking']['parameters']['indexes']['custom_parameters'][$row]['index']['#value'] = !empty($val) ? $val.$parameter_count[$val] : $val;
+          }
+        }
+      }
+      // Return the prepared textfield.
+      return $form['tracking']['parameters']['indexes'];
+    }
+  }
+
+  /**
+   * Fetches and orders user defined (custom) parameters.
+   *
+   * @return array
+   *   The user defined parameters.
+   */
+  protected function getCustomParameters() {
+    if ($parameters = $this->config('google_analytics.settings')->get('custom.parameters')) {
+      $array = [];
+      foreach ($parameters as $row => $value) {
+        $array[] = [
+          'index' => $row,
+          'type' => $value['type'],
+          'name' => $value['name'],
+          'value' => $value['value'],
+        ];
+      }
+      return $array;
+    }
+    return [['value' => '']];
   }
 
 }

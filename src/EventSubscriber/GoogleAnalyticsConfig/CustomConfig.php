@@ -110,47 +110,45 @@ class CustomConfig implements EventSubscriberInterface {
 
   protected function populateCustomConfig() {
     // Add custom dimensions and metrics.
-    foreach (['dimension', 'metric'] as $google_analytics_custom_type) {
-      $google_analytics_custom_vars = $this->config->get('custom.' . $google_analytics_custom_type);
-      // Are there dimensions or metrics configured?
-      if (!empty($google_analytics_custom_vars)) {
-        // Add all the configured variables to the content.
-        foreach ($google_analytics_custom_vars as $google_analytics_custom_var) {
-          // Replace tokens in values.
-          $types = [];
-          if ($this->request->attributes->has('node')) {
-            $node = $this->request->attributes->get('node');
-            if ($node instanceof NodeInterface) {
-              $types += ['node' => $node];
-            }
-          }
-          $google_analytics_custom_var['value'] = $this->token->replace($google_analytics_custom_var['value'], $types, ['clear' => TRUE]);
+    $custom_parameters = $this->config->get('custom.parameters');
+    if (!empty($custom_parameters)) {
+      // Add all the configured variables to the content.
+    foreach ($custom_parameters as $index => $custom_parameter) {
+      // Replace tokens in values.
+      $types = [];
+      if ($this->request->attributes->has('node')) {
+        $node = $this->request->attributes->get('node');
+        if ($node instanceof NodeInterface) {
+          $types += ['node' => $node];
+        }
+      }
+      $custom_parameter['value'] = $this->token->replace($custom_parameter['value'], $types, ['clear' => TRUE]);
 
-          // Suppress empty values.
-          if ((isset($google_analytics_custom_var['name']) && !mb_strlen(trim($google_analytics_custom_var['name']))) || !mb_strlen(trim($google_analytics_custom_var['value']))) {
-            continue;
-          }
+      // Suppress empty values.
+      if ((isset($custom_parameter['name']) && !mb_strlen(trim($custom_parameter['name']))) || !mb_strlen(trim($custom_parameter['value']))) {
+        continue;
+      }
 
-          // Per documentation the max length of a dimension is 150 bytes.
-          // A metric has no length limitation. It's not documented if this
-          // limit means 150 bytes after url encoding or before.
-          // See https://developers.google.com/analytics/devguides/collection/analyticsjs/field-reference#customs
-          if ($google_analytics_custom_type == 'dimension' && mb_strlen($google_analytics_custom_var['value']) > 150) {
-            $google_analytics_custom_var['value'] = substr($google_analytics_custom_var['value'], 0, 150);
-          }
+        // Per documentation the max length of a dimension is 150 bytes.
+        // A metric has no length limitation. It's not documented if this
+        // limit means 150 bytes after url encoding or before.
+        // See https://developers.google.com/analytics/devguides/collection/analyticsjs/field-reference#customs
+        if ($custom_parameter['type'] == 'dimension' && mb_strlen($custom_parameter['value']) > 150) {
+          $custom_parameter['value'] = substr($custom_parameter['value'], 0, 150);
+        }
 
-          // Cast metric values for json_encode to data type numeric.
-          if ($google_analytics_custom_type == 'metric') {
-            settype($google_analytics_custom_var['value'], 'float');
-          };
+        // Cast metric values for json_encode to data type numeric.
+        if ($custom_parameter['type'] == 'metric') {
+          settype($custom_parameter['value'], 'float');
+        };
 
-          // Build the arrays of values.
-          $this->custom_map['custom_map'][$google_analytics_custom_type . $google_analytics_custom_var['index']] = (isset($google_analytics_custom_var['name']) ?? "");
-          if (isset($google_analytics_custom_var['name'])) {
-            $this->custom_vars[$google_analytics_custom_var['name']] = $google_analytics_custom_var['value'];
-          }
+        // Build the arrays of values.
+        $this->custom_map['custom_map'][$index] = ($custom_parameter['name'] ?? "");
+        if (isset($custom_parameter['name'])) {
+          $this->custom_vars[$custom_parameter['name']] = $custom_parameter['value'];
         }
       }
     }
   }
+
 }

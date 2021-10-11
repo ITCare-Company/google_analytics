@@ -109,3 +109,41 @@ function google_analytics_update_8301() {
     ->set('track.tel', TRUE)
     ->save();
 }
+
+/**
+ * Update existing custom dimensions and metrics to user parameters.
+ */
+function google_analytics_update_8400() {
+  $config = \Drupal::configFactory()->getEditable('google_analytics.settings');
+  $custom_parameters = [];
+  $custom_dimensions = $config->getOriginal('custom.dimension');
+  $custom_metrics = $config->getOriginal('custom.metric');
+
+  // Merge Dimensions
+  if (!empty($custom_dimensions)) {
+    foreach ($custom_dimensions as $key => $dimension) {
+      $custom_parameters['dimension' . $key]['type'] = 'dimension';
+      $custom_parameters['dimension' . $key]['name'] = $dimension['name'];
+      $custom_parameters['dimension' . $key]['value'] = $dimension['value'];
+    }
+  }
+
+  // Merge Metrics
+  if (!empty($custom_metrics)) {
+    foreach ($custom_metrics as $key => $metric) {
+      $custom_parameters['metric' . $key]['type'] = 'metric';
+      $custom_parameters['metric' . $key]['name'] = $metric['name'];
+      $custom_parameters['metric' . $key]['value'] = $metric['value'];
+    }
+  }
+
+  if (!empty($custom_parameters)) {
+    $config->set('custom.parameters', $custom_parameters);
+  }
+  // Remove the legacy settings.
+  $config->clear('custom.metric');
+  $config->clear('custom.dimension');
+
+  // Save the settings
+  $config->save();
+}
