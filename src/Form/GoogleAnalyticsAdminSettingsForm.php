@@ -266,7 +266,6 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
 
     // Page specific visibility configurations.
     $account = $this->currentUser;
-    $php_access = $account->hasPermission('use PHP for google analytics tracking visibility');
     $visibility_request_path_pages = $config->get('visibility.request_path_pages');
 
     $form['tracking']['page_visibility_settings'] = [
@@ -275,7 +274,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
       '#group' => 'tracking_scope',
     ];
 
-    if ($config->get('visibility.request_path_mode') == 2 && !$php_access) {
+    if ($config->get('visibility.request_path_mode') == 2) {
       $form['tracking']['page_visibility_settings'] = [];
       $form['tracking']['page_visibility_settings']['google_analytics_visibility_request_path_mode'] = ['#type' => 'value', '#value' => 2];
       $form['tracking']['page_visibility_settings']['google_analytics_visibility_request_path_pages'] = ['#type' => 'value', '#value' => $visibility_request_path_pages];
@@ -287,14 +286,6 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
       ];
       $description = $this->t("Specify pages by using their paths. Enter one path per line. The '*' character is a wildcard. Example paths are %blog for the blog page and %blog-wildcard for every personal blog. %front is the front page.", ['%blog' => '/blog', '%blog-wildcard' => '/blog/*', '%front' => '<front>']);
 
-      if ($this->moduleHandler->moduleExists('php') && $php_access) {
-        $options[] = $this->t('Pages on which this PHP code returns <code>TRUE</code> (not supported in Drupal 9, experts only)');
-        $title = $this->t('Pages or PHP code');
-        $description .= ' ' . $this->t('If the PHP option is chosen, enter PHP code between %php. Note that executing incorrect PHP code can break your Drupal site.', ['%php' => '<?php ?>']);
-      }
-      else {
-        $title = $this->t('Pages');
-      }
       $form['tracking']['page_visibility_settings']['google_analytics_visibility_request_path_mode'] = [
         '#type' => 'radios',
         '#title' => $this->t('Add tracking to specific pages'),
@@ -303,7 +294,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
       ];
       $form['tracking']['page_visibility_settings']['google_analytics_visibility_request_path_pages'] = [
         '#type' => 'textarea',
-        '#title' => $title,
+        '#title' => $this->t('Pages'),
         '#title_display' => 'invisible',
         '#default_value' => !empty($visibility_request_path_pages) ? $visibility_request_path_pages : '',
         '#description' => $description,
