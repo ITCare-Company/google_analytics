@@ -38,7 +38,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
    *
    * @var \Drupal\google_analytics\Helpers\GoogleAnalyticsAccounts
    */
-  private $gaAccounts;
+  protected $gaAccounts;
 
   /**
    * The google analytics local javascript cache manager.
