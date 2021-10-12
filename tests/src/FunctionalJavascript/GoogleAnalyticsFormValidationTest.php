@@ -61,7 +61,7 @@ class GoogleAnalyticsFormValidationTest extends WebDriverTestBase {
    * Tests if Custom Dimensions token form validation works.
    */
   public function testGoogleAnalyticsCustomDimensionsTokenFormValidation() {
-    $this->drupalGet('admin/config/services/google-analytics');
+    $this->drupalGet('admin/config/services/google-analytics#edit-parameters');
     $assert_session = $this->assertSession();
     $page = $this->getSession()->getPage();
     $add_more_button = $page->findButton('tracking_parameters_add_parameter_id');

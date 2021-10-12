@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\google_analytics\Functional;
 
+use Drupal\Component\Serialization\Json;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Url;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
@@ -91,7 +92,7 @@ class GoogleAnalyticsBasicTest extends BrowserTestBase {
     $this->assertSession()->responseContains($this->t('Web Property ID(s)'));
 
     // Check for account code validation.
-    $edit['gtag_ids[0][value]'] = $this->randomMachineName(2);
+    $edit['accounts[0][value]'] = $this->randomMachineName(2);
     $this->drupalGet('admin/config/services/google-analytics');
     $this->submitForm($edit, $this->t('Save configuration'));
     $this->assertSession()->responseContains($this->t('A valid Google Analytics Web Property ID is case sensitive and formatted like UA-xxxxx-yy, G-xxxxxxxx, AW-xxxxxxxxx, or DC-xxxxxxxx.'));
@@ -212,7 +213,7 @@ class GoogleAnalyticsBasicTest extends BrowserTestBase {
     $this->drupalGet('');
     $this->assertSession()->responseContains('<script async src="https://www.googletagmanager.com/gtag/js?id=' . $ua_code . '"></script>');
     $this->assertSession()->responseContains('window.dataLayer = window.dataLayer || [];function gtag(){dataLayer.push(arguments)};gtag("js", new Date());');
-    $this->assertSession()->responseContains('"google_analytics":{"account":"' . $ua_code . '"');
+    $this->assertSession()->responseContains('gtag("config", ' . Json::encode($ua_code));
 
     // Enable anonymizing of IP addresses.
     $this->config('google_analytics.settings')->set('privacy.anonymizeip', 1)->save();
@@ -256,7 +257,7 @@ class GoogleAnalyticsBasicTest extends BrowserTestBase {
 
     // Test whether single domain tracking is active.
     $this->drupalGet('');
-    $this->assertSession()->responseContains('{"groups":"default"}');
+    $this->assertSession()->responseContains('"groups":"default"');
 
     // Enable "One domain with multiple subdomains".
     $this->config('google_analytics.settings')->set('domain_mode', 1)->save();
@@ -280,8 +281,8 @@ class GoogleAnalyticsBasicTest extends BrowserTestBase {
       ->set('cross_domains', "www.example.com\nwww.example.net")
       ->save();
     $this->drupalGet('');
-    $this->assertSession()->responseContains('gtag("config", "' . $ua_code . '", {"groups":"default","linker":');
-    $this->assertSession()->responseContains('gtag("config", "' . $ua_code . '", {"groups":"default","linker":{"domains":["www.example.com","www.example.net"]}});');
+    $this->assertSession()->responseContains('"groups":"default","linker":');
+    $this->assertSession()->responseContains('"groups":"default","linker":{"domains":["www.example.com","www.example.net"]}');
     $this->assertSession()->responseContains('"trackDomainMode":2,');
     $this->assertSession()->responseContains('"trackCrossDomains":["www.example.com","www.example.net"]');
     $this->config('google_analytics.settings')->set('domain_mode', 0)->save();
@@ -316,7 +317,7 @@ class GoogleAnalyticsBasicTest extends BrowserTestBase {
       ->set('codesnippet.after', 'gtag("config", "UA-123456-3", {"groups":"default"});if(1 == 1 && 2 < 3 && 2 > 1){console.log("Google Analytics: Custom condition works.");}')
       ->save();
     $this->drupalGet('');
-    $this->assertSession()->responseContains('gtag("config", "' . $ua_code . '", {"groups":"default","cookie_domain":"foo.example.com","cookie_name":"myNewName","cookie_expires":20000,"sample_rate":4.3});');
+    $this->assertSession()->responseContains('"groups":"default","cookie_domain":"foo.example.com","cookie_name":"myNewName","cookie_expires":20000,"sample_rate":4.3');
     $this->assertSession()->responseContains('gtag("set", {"currency":"USD"});');
     $this->assertSession()->responseContains('gtag("config", "UA-123456-3", {"groups":"default"});');
     $this->assertSession()->responseContains('if(1 == 1 && 2 < 3 && 2 > 1){console.log("Google Analytics: Custom condition works.");}');

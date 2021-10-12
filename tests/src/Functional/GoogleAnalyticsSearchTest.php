@@ -74,7 +74,7 @@ class GoogleAnalyticsSearchTest extends BrowserTestBase {
     $this->assertSession()->responseContains($ua_code);
 
     $this->drupalGet('search/node');
-    $this->assertSession()->responseNotContains('gtag("config", ' . Json::encode($ua_code) . ', {"groups":"default","page_path":"');
+    $this->assertSession()->responseNotContains('"page_path":(window.google_analytics_search_results) ?');
 
     // Enable site search support.
     $this->config('google_analytics.settings')->set('track.site_search', 1)->save();
@@ -85,7 +85,7 @@ class GoogleAnalyticsSearchTest extends BrowserTestBase {
     // Fire a search, it's expected to get 0 results.
     $this->drupalGet('search/node');
     $this->submitForm($search, $this->t('Search'));
-    $this->assertSession()->responseContains('gtag("config", ' . Json::encode($ua_code) . ', {"groups":"default","page_path":(window.google_analytics_search_results) ?');
+    $this->assertSession()->responseContains('"page_path":(window.google_analytics_search_results) ?');
     // Check GA Site Search query param is 'search' when there are no results.
     $this->assertSession()->responseMatches('/(.+search=' . urlencode("no-results:{$search['keys']}") . ')/');
     $this->assertSession()->responseContains('window.google_analytics_search_results = 0;');
@@ -94,7 +94,7 @@ class GoogleAnalyticsSearchTest extends BrowserTestBase {
     $this->createNodeAndIndex($search['keys']);
     $this->drupalGet('search/node');
     $this->submitForm($search, $this->t('Search'));
-    $this->assertSession()->responseContains('gtag("config", ' . Json::encode($ua_code) . ', {"groups":"default","page_path":(window.google_analytics_search_results) ?');
+    $this->assertSession()->responseContains('"page_path":(window.google_analytics_search_results) ?');
     // Check the GA Site Search query param is 'search'.
     $this->assertSession()->responseMatches('/(.+search=' . urlencode($search['keys']) . ')/');
     $this->assertSession()->responseContains('window.google_analytics_search_results = 1;');
@@ -103,7 +103,7 @@ class GoogleAnalyticsSearchTest extends BrowserTestBase {
     $this->createNodeAndIndex($search['keys']);
     $this->drupalGet('search/node');
     $this->submitForm($search, $this->t('Search'));
-    $this->assertSession()->responseContains('gtag("config", ' . Json::encode($ua_code) . ', {"groups":"default","page_path":(window.google_analytics_search_results) ?');
+    $this->assertSession()->responseContains('"page_path":(window.google_analytics_search_results) ?');
     $this->assertSession()->responseContains('window.google_analytics_search_results = 2;');
   }
 
