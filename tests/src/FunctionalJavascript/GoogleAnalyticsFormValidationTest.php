@@ -8,7 +8,7 @@ use Drupal\FunctionalJavascriptTests\WebDriverTestBase;
 /**
  * Tests add more behavior for a multiple value field.
  *
- * @group field
+ * @group google_analytics
  */
 class GoogleAnalyticsFormValidationTest extends WebDriverTestBase {
 
@@ -61,14 +61,17 @@ class GoogleAnalyticsFormValidationTest extends WebDriverTestBase {
    * Tests if Custom Dimensions token form validation works.
    */
   public function testGoogleAnalyticsCustomDimensionsTokenFormValidation() {
-    $this->drupalGet('admin/config/services/google-analytics#edit-parameters');
+    $this->drupalGet('admin/config/services/google-analytics');
     $assert_session = $this->assertSession();
     $page = $this->getSession()->getPage();
-    $add_more_button = $page->findButton('tracking_parameters_add_parameter_id');
 
     // Set the UA Code
+    $user_name = $assert_session->waitForField('accounts[0][value]');
     $account_field = $page->findField('accounts[0][value]');
     $account_field->setValue('UA-123456-1');
+
+    $user_name = $assert_session->waitForLink('Dimensions and Metrics');
+    $page->clickLink('Dimensions and Metrics');
 
     // First set a value on the first input field.
     $field_0_name = $page->findField('custom_parameters[0][name]');
@@ -76,6 +79,7 @@ class GoogleAnalyticsFormValidationTest extends WebDriverTestBase {
     $field_0_value = $page->findField('custom_parameters[0][value]');
     $field_0_value->setValue('[current-user:name]');
 
+    $add_more_button = $page->findButton('tracking_parameters_add_parameter_id');
     // Add another item
     $add_more_button->click();
     $field_1 = $assert_session->waitForField('custom_parameters[1][name]');
