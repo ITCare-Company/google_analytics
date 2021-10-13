@@ -308,8 +308,8 @@ class GoogleAnalyticsBasicTest extends BrowserTestBase {
     $codesnippet_parameters = [
       'cookie_domain' => 'foo.example.com',
       'cookie_name' => 'myNewName',
-      'cookie_expires' => 20000,
-      'sample_rate' => 4.3,
+      'cookie_expires' => "20000",
+      'sample_rate' => "4.3",
     ];
     $this->config('google_analytics.settings')
       ->set('codesnippet.create', $codesnippet_parameters)
