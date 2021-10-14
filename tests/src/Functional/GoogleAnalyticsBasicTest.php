@@ -317,7 +317,7 @@ class GoogleAnalyticsBasicTest extends BrowserTestBase {
       ->set('codesnippet.after', 'gtag("config", "UA-123456-3", {"groups":"default"});if(1 == 1 && 2 < 3 && 2 > 1){console.log("Google Analytics: Custom condition works.");}')
       ->save();
     $this->drupalGet('');
-    $this->assertSession()->responseContains('"groups":"default","cookie_domain":"foo.example.com","cookie_name":"myNewName","cookie_expires":20000,"sample_rate":4.3');
+    $this->assertSession()->responseContains('"groups":"default","cookie_domain":"foo.example.com","cookie_name":"myNewName","cookie_expires":"20000","sample_rate":"4.3"');
     $this->assertSession()->responseContains('gtag("set", {"currency":"USD"});');
     $this->assertSession()->responseContains('gtag("config", "UA-123456-3", {"groups":"default"});');
     $this->assertSession()->responseContains('if(1 == 1 && 2 < 3 && 2 > 1){console.log("Google Analytics: Custom condition works.");}');

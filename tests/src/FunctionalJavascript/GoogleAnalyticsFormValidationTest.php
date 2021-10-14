@@ -79,7 +79,7 @@ class GoogleAnalyticsFormValidationTest extends WebDriverTestBase {
     $field_0_value = $page->findField('custom_parameters[0][value]');
     $field_0_value->setValue('[current-user:name]');
 
-    $add_more_button = $page->findButton('tracking_parameters_add_parameter_id');
+    $add_more_button = $page->findButton('Add another Parameter');
     // Add another item
     $add_more_button->click();
     $field_1 = $assert_session->waitForField('custom_parameters[1][name]');
