@@ -99,7 +99,7 @@ function google_analytics_page_attachments(array &$page) {
     $javascript = new GaJavascriptObject($default_id);
 
     // Add link tracking.
-    $link_settings = ['account' => $default_id];
+    $link_settings = ['account' => (string) $default_id];
     if ($track_outbound = $config->get('track.outbound')) {
       $link_settings['trackOutbound'] = $track_outbound;
     }
