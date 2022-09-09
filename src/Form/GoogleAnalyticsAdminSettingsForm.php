@@ -792,7 +792,6 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
 
     $config
       ->set('account', $accounts)
-      ->set('ua_legacy', $form_state->getValue('google_analytics_legacy'))
       ->set('cross_domains', $form_state->getValue('google_analytics_cross_domains'))
       ->set('codesnippet.create', $form_state->getValue('google_analytics_codesnippet_create'))
       ->set('codesnippet.before', $form_state->getValue('google_analytics_codesnippet_before'))
