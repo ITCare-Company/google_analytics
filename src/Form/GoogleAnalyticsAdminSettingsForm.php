@@ -142,7 +142,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
       $form['general']['accounts'][$i]['#attributes']['class'][] = 'draggable';
       $form['general']['accounts'][$i]['#weight'] = $i;
       $form['general']['accounts'][$i]['value'] = [
-        '#default_value' => (string)$accounts[$i] ?? '',
+        '#default_value' => (string)($accounts[$i] ?? ''),
         '#maxlength' => 20,
         '#required' => ($i === 0),
         '#size' => 20,
@@ -152,7 +152,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
 
       $form['general']['accounts'][$i]['weight'] = [
         '#type' => 'weight',
-        '#title' => $this->t('Weight for @title', ['@title' => (string)$accounts[$i]]),
+        '#title' => $this->t('Weight for @title', ['@title' => (string)($accounts[$i] ?? '')]),
         '#title_display' => 'invisible',
         '#delta' => 50,
         '#default_value' => $i,
