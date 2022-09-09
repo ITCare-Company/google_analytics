@@ -5,7 +5,7 @@ namespace Drupal\google_analytics\EventSubscriber\PagePath;
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Entity\EntityRepositoryInterface;
-use Drupal\Core\Extension\ModuleHandler;
+use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Url;
 use Drupal\google_analytics\Event\PagePathEvent;
 use Drupal\google_analytics\Constants\GoogleAnalyticsEvents;
@@ -58,7 +58,7 @@ class ContentTranslation implements EventSubscriberInterface {
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   Config Factory for Google Analytics Settings.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, RequestStack $request, ModuleHandler $module_handler, EntityRepositoryInterface $entity_repsoitory) {
+  public function __construct(ConfigFactoryInterface $config_factory, RequestStack $request, ModuleHandlerInterface $module_handler, EntityRepositoryInterface $entity_repsoitory) {
     $this->config = $config_factory->get('google_analytics.settings');
     $this->request = $request->getCurrentRequest();
     $this->moduleHandler = $module_handler;

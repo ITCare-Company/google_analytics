@@ -4,7 +4,7 @@ namespace Drupal\google_analytics\EventSubscriber\PagePath;
 
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\Core\Extension\ModuleHandler;
+use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Routing\CurrentRouteMatch;
 use Drupal\Core\Url;
 use Drupal\google_analytics\Event\PagePathEvent;
@@ -45,7 +45,7 @@ class Search implements EventSubscriberInterface {
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   Config Factory for Google Analytics Settings.
    */
-  public function __construct(ConfigFactoryInterface $config_factory, RequestStack $request, ModuleHandler $module_handler, CurrentRouteMatch $current_route) {
+  public function __construct(ConfigFactoryInterface $config_factory, RequestStack $request, ModuleHandlerInterface $module_handler, CurrentRouteMatch $current_route) {
     $this->config = $config_factory->get('google_analytics.settings');
     $this->request = $request->getCurrentRequest();
     $this->moduleHandler = $module_handler;
