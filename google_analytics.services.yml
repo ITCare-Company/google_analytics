@@ -7,7 +7,7 @@ services:
     arguments: [ '@config.factory', '@private_key' ]
   google_analytics.javascript_cache:
     class: Drupal\google_analytics\JavascriptLocalCache
-    arguments: [ '@http_client', '@file_system', '@config.factory', '@logger.factory', '@state' ]
+    arguments: [ '@http_client', '@file_system', '@config.factory', '@logger.factory', '@state', '@file_url_generator' ]
 
   # Google Analytics Event Subscribers
   google_analytics.events.messages:

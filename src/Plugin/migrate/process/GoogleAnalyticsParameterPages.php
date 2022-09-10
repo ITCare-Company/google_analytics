@@ -69,7 +69,7 @@ class GoogleAnalyticsParameterPages extends ProcessPluginBase implements Contain
    * {@inheritdoc}
    */
   public function transform($value, MigrateExecutableInterface $migrate_executable, Row $row, $destination_property) {
-    list($dimensions, $metrics) = $value;
+    [$dimensions, $metrics] = $value;
     $return_array = [];
     foreach ($dimensions as $dimension) {
       $index = 'dimension' . $dimension['index'];
