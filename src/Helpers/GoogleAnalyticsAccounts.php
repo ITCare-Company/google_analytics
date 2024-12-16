@@ -49,7 +49,7 @@ class GoogleAnalyticsAccounts {
       $this->accounts[] = new GaAccount($accounts);
     }
     else {
-      $accounts_array = explode(',', $accounts);
+      $accounts_array = explode(',', $accounts ?? '');
       foreach($accounts_array as $account) {
         $this->accounts[] = new GaAccount($account);
       }

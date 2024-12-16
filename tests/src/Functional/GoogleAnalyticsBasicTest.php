@@ -270,7 +270,7 @@ class GoogleAnalyticsBasicTest extends BrowserTestBase {
     // TODO: Workaround to run tests successfully. This feature cannot tested
     // reliable.
     global $cookie_domain;
-    if (count(explode('.', $cookie_domain)) > 2 && !is_numeric(str_replace('.', '', $cookie_domain))) {
+    if (count(explode('.', $cookie_domain ?? '')) > 2 && !is_numeric(str_replace('.', '', $cookie_domain))) {
       $this->assertSession()->responseContains('"cookie_domain":"' . $cookie_domain . '"');
     }
     else {

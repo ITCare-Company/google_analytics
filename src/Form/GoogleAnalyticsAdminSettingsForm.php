@@ -179,7 +179,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
     global $cookie_domain;
     $multiple_sub_domains = [];
     foreach (['www', 'app', 'shop'] as $subdomain) {
-      if (!empty($cookie_domain) && count(explode('.', $cookie_domain)) > 2 && !is_numeric(str_replace('.', '', $cookie_domain))) {
+      if (!empty($cookie_domain) && count(explode('.', $cookie_domain ?? '')) > 2 && !is_numeric(str_replace('.', '', $cookie_domain))) {
         $multiple_sub_domains[] = $subdomain . $cookie_domain;
       }
       // IP addresses or localhost.
@@ -192,7 +192,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
     foreach (['.com', '.net', '.org'] as $tldomain) {
       $host = $_SERVER['HTTP_HOST'];
       $domain = substr($host, 0, strrpos($host, '.'));
-      if (count(explode('.', $host)) > 2 && !is_numeric(str_replace('.', '', $host))) {
+      if (count(explode('.', $host ?? '')) > 2 && !is_numeric(str_replace('.', '', $host))) {
         $multiple_toplevel_domains[] = $domain . $tldomain;
       }
       // IP addresses or localhost.
@@ -686,7 +686,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
         if (!mb_strlen($parameter['value']) || !mb_strlen($parameter['name']) || empty($parameter['index'])) {
           continue;
         }
-        [$type] = explode('-', $parameter['type']);
+        [$type] = explode('-', $parameter['type'] ?? '');
         $custom_parameters[$row]['index'] = $parameter['index'];
         $custom_parameters[$row]['type'] = $type;
         $custom_parameters[$row]['name'] = trim($parameter['name']);
@@ -984,7 +984,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
   protected static function extractParameterValues($string) {
     $values = [];
 
-    $list = explode("\n", $string);
+    $list = explode("\n", $string ?? '');
     $list = array_map('trim', $list);
     $list = array_filter($list, 'strlen');
 
@@ -1229,13 +1229,13 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
     if ($selectedValue = $form_state->getTriggeringElement()) {
       // Get the index of the selected option.
       // If the value is numeric it means the 'null' option was selected.
-      [$value, $current_row] = explode('-', $selectedValue['#value']);
+      [$value, $current_row] = explode('-', $selectedValue['#value'] ?? '');
       if (!empty($value)) {
         // Metric/Dimensions share index numbers. Re-order them
         $parameter_count = ['dimension' => 0, 'metric' => 0];
         $parameters = $form_state->getValue('custom_parameters');
         foreach ($parameters as $row => $parameter) {
-          [$val, $ind] = explode('-', $parameter['type']);
+          [$val, $ind] = explode('-', $parameter['type'] ?? '');
           $parameter_count[$val]++;
           if($row == $current_row) {
             $form['tracking']['parameters']['indexes']['custom_parameters'][$row]['index']['#value'] = $value.$parameter_count[$value];
