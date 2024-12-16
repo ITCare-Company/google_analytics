@@ -3,15 +3,11 @@
 namespace Drupal\google_analytics\Form;
 
 use Drupal\Component\Utility\Html;
-use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
-use Drupal\Core\Session\AccountInterface;
 use Drupal\google_analytics\Constants\GoogleAnalyticsPatterns;
-use Drupal\google_analytics\Helpers\GoogleAnalyticsAccounts;
-use Drupal\google_analytics\JavascriptLocalCache;
+Use Drupal\user\Entity\Role;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -48,39 +44,15 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
   protected $gaJavascript;
 
   /**
-   * The constructor method.
-   *
-   * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
-   *   The config factory.
-   * @param \Drupal\Core\Session\AccountInterface $current_user
-   *   The current user.
-   * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
-   *   The manages modules.
-   * @param \Drupal\google_analytics\Helpers\GoogleAnalyticsAccounts $google_analytics_accounts
-   *   The google analytics accounts manager.
-   * @param \Drupal\google_analytics\JavascriptLocalCache $google_analytics_javascript
-   *   The JS Local Cache service.
-   */
-  public function __construct(ConfigFactoryInterface $config_factory, AccountInterface $current_user, ModuleHandlerInterface $module_handler, GoogleAnalyticsAccounts $google_analytics_accounts, JavascriptLocalCache $google_analytics_javascript) {
-    parent::__construct($config_factory);
-    $this->currentUser = $current_user;
-    $this->moduleHandler = $module_handler;
-    $this->gaAccounts = $google_analytics_accounts;
-    $this->gaJavascript = $google_analytics_javascript;
-  }
-
-  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
-    return new static(
-    // Load the service required to construct this class.
-      $container->get('config.factory'),
-      $container->get('current_user'),
-      $container->get('module_handler'),
-      $container->get('google_analytics.accounts'),
-      $container->get('google_analytics.javascript_cache')
-    );
+    $instance = parent::create($container);
+    $instance->currentUser = $container->get('current_user');
+    $instance->moduleHandler = $container->get('module_handler');
+    $instance->gaAccounts = $container->get('google_analytics.accounts');
+    $instance->gaJavascript = $container->get('google_analytics.javascript_cache');
+    return $instance;
   }
 
   /**
@@ -324,7 +296,7 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
       '#type' => 'checkboxes',
       '#title' => $this->t('Roles'),
       '#default_value' => !empty($visibility_user_role_roles) ? $visibility_user_role_roles : [],
-      '#options' => array_map('\Drupal\Component\Utility\Html::escape', user_role_names()),
+      '#options' => array_map('\Drupal\Component\Utility\Html::escape', $this->getRolesName()),
       '#description' => $this->t('If none of the roles are selected, all users will be tracked. If a user has any of the roles checked, that user will be tracked (or excluded, depending on the setting above).'),
     ];
 
@@ -692,6 +664,16 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
     return parent::buildForm($form, $form_state);
   }
 
+  /**
+   * Helper function to get roles name.
+   * @return array|\Drupal\Core\StringTranslation\TranslatableMarkup[]|null[]|string[]
+   */
+  private function getRolesName(): array {
+    $roles = Role::loadMultiple();
+    return array_map(function ($item) {
+      return $item->label();
+    }, $roles);
+  }
   /**
    * {@inheritdoc}
    */

@@ -61,6 +61,9 @@ class GoogleAnalyticsBasicTest extends BrowserTestBase {
       'administer modules',
       'administer site configuration',
     ];
+    if (version_compare(\Drupal::VERSION, '10.2.0', '>=')) {
+      $permissions[] = 'access help pages';
+    }
 
     // User to set up google_analytics.
     $this->noSnippetUser = $this->drupalCreateUser($permissions);
