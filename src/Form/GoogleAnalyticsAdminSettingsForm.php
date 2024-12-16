@@ -116,7 +116,6 @@ class GoogleAnalyticsAdminSettingsForm extends ConfigFormBase {
       $form['general']['accounts'][$i]['value'] = [
         '#default_value' => (string)($accounts[$i] ?? ''),
         '#maxlength' => 20,
-        '#required' => ($i === 0),
         '#size' => 20,
         '#type' => 'textfield',
         '#element_validate' => [[get_class($this), 'gtagElementValidate']],
