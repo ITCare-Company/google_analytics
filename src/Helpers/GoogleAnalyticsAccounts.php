@@ -46,7 +46,10 @@ class GoogleAnalyticsAccounts {
     $accounts = $this->config->get('account') ?? '';
     // Create the accounts array from either a single gtag id or multiple ones.
     if (strpos($accounts, ',') === FALSE) {
-      $this->accounts[] = new GaAccount($accounts);
+      // Only fill the accounts array if an account exists in config.
+      if ($accounts !== '') {
+        $this->accounts[] = new GaAccount($accounts);
+      }
     }
     else {
       $accounts_array = explode(',', $accounts ?? '');
