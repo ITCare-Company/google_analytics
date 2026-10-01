@@ -73,7 +73,7 @@ class CustomConfig implements EventSubscriberInterface {
   /**
    * {@inheritdoc}
    */
-  public static function getSubscribedEvents() {
+  public static function getSubscribedEvents(): array {
     $events[GoogleAnalyticsEvents::ADD_CONFIG][] = ['onAddConfig'];
     $events[GoogleAnalyticsEvents::ADD_EVENT][] = ['onAddEvent'];
     return $events;

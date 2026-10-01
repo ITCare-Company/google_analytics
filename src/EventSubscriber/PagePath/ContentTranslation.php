@@ -68,7 +68,7 @@ class ContentTranslation implements EventSubscriberInterface {
   /**
    * {@inheritdoc}
    */
-  public static function getSubscribedEvents() {
+  public static function getSubscribedEvents(): array {
     $events[GoogleAnalyticsEvents::PAGE_PATH][] = ['onPagePath'];
     return $events;
   }

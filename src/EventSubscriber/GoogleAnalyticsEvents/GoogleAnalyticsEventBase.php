@@ -55,7 +55,7 @@ abstract class GoogleAnalyticsEventBase implements EventSubscriberInterface {
   /**
    * {@inheritdoc}
    */
-  public static function getSubscribedEvents() {
+  public static function getSubscribedEvents(): array {
     $events[GoogleAnalyticsEvents::ADD_EVENT][] =
       ['onAddEvent', self::$priority];
     return $events;
