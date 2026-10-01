@@ -50,7 +50,7 @@ function google_analytics_requirements($phase) {
       $requirements['google_analytics_account'] = [
         'title' => t('Google Analytics module'),
         'description' => t('Google Analytics module has not been configured yet. Please configure its settings from the <a href=":url">Google Analytics settings page</a>.', [':url' => Url::fromRoute('google_analytics.admin_settings_form')->toString()]),
-        'severity' => REQUIREMENT_WARNING,
+        'severity' => (class_exists('\\Drupal\\Core\\Extension\\Requirement\\RequirementSeverity') ? \Drupal\Core\Extension\Requirement\RequirementSeverity::Warning : REQUIREMENT_WARNING),
         'value' => t('Not configured'),
       ];
     }
@@ -59,7 +59,7 @@ function google_analytics_requirements($phase) {
       $requirements['google_analytics_debugging'] = [
         'title' => t('Google Analytics module'),
         'description' => t('Google Analytics module has debugging enabled. Please disable debugging setting in production sites from the <a href=":url">Google Analytics settings page</a>.', [':url' => Url::fromRoute('google_analytics.admin_settings_form')->toString()]),
-        'severity' => REQUIREMENT_WARNING,
+        'severity' => (class_exists('\\Drupal\\Core\\Extension\\Requirement\\RequirementSeverity') ? \Drupal\Core\Extension\Requirement\RequirementSeverity::Warning : REQUIREMENT_WARNING),
         'value' => t('Debugging enabled'),
       ];
     }
@@ -69,7 +69,7 @@ function google_analytics_requirements($phase) {
       $requirements['google_analytics_php'] = [
         'title' => t('Google Analytics module'),
         'description' => t('Using PHP code in Google Analytics is deprecated and not available in Drupal 9. You must move your logic into a custom module, and change the <a href=":url">Page Visibility settings</a> to suppress this message.', [':url' => Url::fromRoute('google_analytics.admin_settings_form')->toString()]),
-        'severity' => REQUIREMENT_ERROR,
+        'severity' => (class_exists('\\Drupal\\Core\\Extension\\Requirement\\RequirementSeverity') ? \Drupal\Core\Extension\Requirement\RequirementSeverity::Error : REQUIREMENT_ERROR),
         'value' => t('PHP code exists'),
       ];
     }
