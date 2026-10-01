@@ -113,7 +113,7 @@ class JavascriptLocalCache {
             // Save updated tracking code file to disk.
             $this->fileSystem->saveData($data, $file_destination, $fileExists);
             // Based on Drupal Core class AssetDumper.
-            if (extension_loaded('zlib') && $this->configFactory->get('system.performance')->get('js.gzip')) {
+            if (extension_loaded('zlib') && ($this->configFactory->get('system.performance')->get('js.compress') ?? $this->configFactory->get('system.performance')->get('js.gzip'))) {
               $this->fileSystem->saveData(gzencode($data, 9, FORCE_GZIP), $file_destination . '.gz', $fileExists);
             }
             $this->logger->info('Locally cached tracking code file has been updated.');
@@ -135,7 +135,7 @@ class JavascriptLocalCache {
             // automatically, if new files are added.
             $this->fileSystem->saveData($data, $file_destination, $fileExists);
             // Based on Drupal Core class AssetDumper.
-            if (extension_loaded('zlib') && $this->configFactory->get('system.performance')->get('js.gzip')) {
+            if (extension_loaded('zlib') && ($this->configFactory->get('system.performance')->get('js.compress') ?? $this->configFactory->get('system.performance')->get('js.gzip'))) {
               $this->fileSystem->saveData(gzencode($data, 9, FORCE_GZIP), $file_destination . '.gz', $fileExists);
             }
             $this->logger->info('Locally cached tracking code file has been saved.');
